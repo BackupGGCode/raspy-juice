@@ -1,0 +1,56 @@
+# summary One-sentence summary of this page.<br>
+# Describes I2C emulated slave register set of the Raspy Juice Exp Board.
+
+= Introduction =
+
+Raspy Juice is an Experimental Board with an AVR ATmega168A microcontroller (MCU) to provide the services of controlling 4 channels of RC servo outputs, an RS485 interface, and a half-duplex software-based RS232 interface. In addition, the spare pins of the MCU is brought to an expansion header which may be used for other purposes. The MCU itself is interfaced to the host computer through an I2C/TWI interface, in which the former is a slave device.
+
+This *_draft_* document is to plan and describe the emulated I2C register set with which the MCU control-firmware is to interprete and perform actions, or reply to the host computer.
+
+= Details =
+Add your content here.  Format your content with:
+  * Text in *bold* or _italic_
+  * Headings, paragraphs, and lists
+  * Automatic links to other wiki pages
+
+==== Devices and I2C Addresses on the Raspy Juice Exp Board ====
+  * MCU slave I2C write address: 0x90<br>
+  * MCU slave I2C read  address: 0x91<br>
+  * RTC PCF8523 I2C write address: 0xd0<br>
+  * RTC PCF8523 I2C read  address: 0xd1<br>
+
+==== Desired functions the MCU should perform ====
+  * Read/write MCU EEPROM
+  * Set the 4-channel RC servo outputs
+  * Control, read status and read/write to the RS485 interface
+  * Control, read status and read/write to the RS232 interface
+  * Control, set direction, and read/write to the spare MCU GPIO pins
+  * Control, and read the spare MCU ADC pins
+  * Reset and activate the MCU in bootloader mode for firmware updates
+
+==== Emulated I2C Register Set ====
+
+|| *Register<br>Address* || *Name* || *Bit7* || *Bit 6* || *Bit 5* || *Bit 4* || *Bit 3* || *Bit 2* || *Bit 1* || *Bit 0* ||
+|| || GSTAT ||
+|| || GCONT ||
+|| ||
+|| || RX485   ||
+|| || TX485   ||
+|| || RLVL485 ||
+|| || TLVL485 ||
+|| || STS485  ||
+|| || MCR485  ||
+|| || BPS485  ||
+|| ||
+|| || RX232   ||
+|| || TX232   ||
+|| || RLVL232 ||
+|| || TLVL232 ||
+|| || STS232  ||
+|| || MCR232  ||
+|| || BPS232  ||
+|| ||
+|| || SRV_0   ||
+|| || SRV_1   ||
+|| || SRV_2   ||
+|| || SRV_3   ||
