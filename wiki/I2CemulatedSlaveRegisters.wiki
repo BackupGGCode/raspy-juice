@@ -1,4 +1,4 @@
-# summary Describes I2C emulated slave register set of the Raspy Juice Exp Board.
+#summary Describes I2C emulated slave register set of the Raspy Juice Exp Board.
 
 = Introduction =
 
