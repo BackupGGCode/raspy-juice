@@ -1,9 +1,8 @@
-# summary One-sentence summary of this page.<br>
-# Describes I2C emulated slave register set of the Raspy Juice Exp Board.
+# summary Describes I2C emulated slave register set of the Raspy Juice Exp Board.
 
 = Introduction =
 
-Raspy Juice is an Experimental Board with an AVR ATmega168A microcontroller (MCU) to provide the services of controlling 4 channels of RC servo outputs, an RS485 interface, and a half-duplex software-based RS232 interface. In addition, the spare pins of the MCU is brought to an expansion header which may be used for other purposes. The MCU itself is interfaced to the host computer through an I2C/TWI interface, in which the former is a slave device.
+*Raspy Juice* is an experimental expansion board with an AVR ATmega168A microcontroller (MCU) to provide the services of controlling 4 channels of RC servo outputs, an RS485 interface, and a half-duplex software-based RS232 interface. In addition, the spare pins of the MCU is brought to an expansion header which may be used for other purposes. The MCU itself is interfaced to the host computer through an I2C/TWI interface, in which the former is a slave device.
 
 This *_draft_* document is to plan and describe the emulated I2C register set with which the MCU control-firmware is to interprete and perform actions, or reply to the host computer.
 
