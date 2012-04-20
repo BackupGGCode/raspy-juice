@@ -18,7 +18,7 @@ This *_draft_* document is to plan for the development of this bootloader if nec
   * [http://www.atmel.com/Images/doc8435.pdf Atmel AVR1327: Two Wire Interface (TWI) Slave Bootloader for Atmel AVR XMEGA]
   * [http://www.atmel.com/Images/doc8437.pdf Atmel AVR1622: TWI Boot Loader for XMEGA]
   * [http://www.dl5neg.de/bootloader/bootloader.html A bootloader for the ATmega8 AVR microprocessor]
-  * [http://docwiki.gumstix.org/Robostix_i2c_bootloader Robostix i2c bootloader]
+  * [http://docwiki.gumstix.com/Robostix_i2c_bootloader Robostix i2c bootloader]
   * [http://git.kopf-tisch.de/?p=twiboot Open-source(?) TWI bootloader for AVR]
   * [http://code.google.com/p/avr-xboot/ avr-xboot Google Code project]
   * [http://www.scienceprog.com/testing-avr-universal-bootloader-on-atmega128/ Testing AVR universal bootloader on Atmega128]
