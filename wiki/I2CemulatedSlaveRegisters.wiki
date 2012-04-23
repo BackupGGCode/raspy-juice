@@ -30,9 +30,13 @@ This *_draft_* document is to plan and describe the emulated I2C register set wi
 || || GCONT || || || || || || || || || ||
 || ||
 || || SRV_0   || bit7 || bit6 || bit5 || bit4 || bit3 || bit2 || bit1 || bit0 || *signed char*||
-|| || SRV_1   || || || || || || || || || *-128 to 127*  ||
+|| || SRV_1   || || || || || || || || || *-128 to 127*      ||
 || || SRV_2   || || || || || || || || || *corresponds to*   ||
-|| || SRV_3   || || || || || || || || || *1.00ms to 2.00ms*   ||
+|| || SRV_3   || || || || || || || || || *1.00ms to 2.00ms* ||
+|| || <font color="#c0c0c0">SRV_4</font>   || || || || || || || || || ||
+|| || <font color="#c0c0c0">SRV_5</font>   || || || || || || || || || ||
+|| || <font color="#c0c0c0">SRV_6</font>   || || || || || || || || || ||
+|| || <font color="#c0c0c0">SRV_7</font>   || || || || || || || || || ||
 || ||
 || || RX232   ||
 || || TX232   ||
