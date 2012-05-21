@@ -29,25 +29,25 @@ This *_draft_* document is to plan and describe the emulated I2C register set wi
 || 0x00 || GSTAT || || || EEB || ADCB || || RXA485 || || RXA232 || ||
 || || GCONT || || || || || || || || || ||
 || ||
-|| 0x01 || SRV_0   || bit7 || bit6 || bit5 || bit4 || bit3 || bit2 || bit1 || bit0 || *signed char*||
-|| 0x02 || SRV_1   || || || || || || || || || *-128 to 127*      ||
-|| 0x03 || SRV_2   || || || || || || || || || *corresponds to*   ||
-|| 0x04 || SRV_3   || || || || || || || || || *1.00ms to 2.00ms* ||
+|| 0x01 || SRV_0   || bit7<br>bit15 || bit6<br>bit14 || bit5<br>bit13 || bit4<br>bit12 || bit3<br>bit11 || bit2<br>bit10 || bit1<br>bit9 || bit0<br>bit8 || *unsigned short (uint16_t)*||
+|| 0x02 || SRV_1   || || || || || || || || || *Use I2C word-write to set pulse-width in*      ||
+|| 0x03 || SRV_2   || || || || || || || || || *microseconds. Limited to 500usec to 2500usec.*   ||
+|| 0x04 || SRV_3   || || || || || || || || || *RC Servos are usually 1.00ms to 2.00ms.* ||
 || || <font color="#c0c0c0">SRV_4</font>   || || || || || || || || || ||
 || || <font color="#c0c0c0">SRV_5</font>   || || || || || || || || || ||
 || || <font color="#c0c0c0">SRV_6</font>   || || || || || || || || || ||
 || || <font color="#c0c0c0">SRV_7</font>   || || || || || || || || || ||
 || ||
-|| || RX232   ||
-|| || TX232   ||
+|| 0x10 || RX232   ||
+|| 0x10 || TX232   ||
 || || RLVL232 ||
 || || TLVL232 ||
 || || STAT232 ||
 || || MCR232  ||
 || || BPS232  ||
 || ||
-|| || RX485   ||
-|| || TX485   ||
+|| 0x20 || RX485   ||
+|| 0x20 || TX485   ||
 || || RLVL485 ||
 || || TLVL485 ||
 || || STAT485 ||
@@ -57,6 +57,6 @@ This *_draft_* document is to plan and describe the emulated I2C register set wi
 || 0x40 || ADCMUX || || || || || MUX3 || MUX2 || MUX1 || MUX0 || *Writing initiates conversion* ||
 || 0x41 || ADCDAT || bit7<br>0 || bit6<br>0 || bit5<br>0 || bit4<br>0 || bit3<br>0 || bit2<br>0 || bit1<br>bit9 || bit0<br>bit8 || ||
 || ||
-|| || EEADDR || adr7<br>x || adr6<br>x || adr5<br>x || adr4<br>x || adr3<br>x || adr2<br>x || adr1<br>x    || adr0<br>adr9 || *Writing initiates readback<br> into EEDATA* ||
-|| || EEDATA || || || || || || || || || *Writing initiates<br>EEPROM programming* ||
+|| 0x50 || EEADDR || adr7<br>x || adr6<br>x || adr5<br>x || adr4<br>x || adr3<br>x || adr2<br>x || adr1<br>x    || adr0<br>adr9 || *Writing initiates readback<br> into EEDATA* ||
+|| 0x51 || EEDATA || || || || || || || || || *Writing initiates<br>EEPROM programming* ||
 || 0xb0 || REBOOT || || || || || || || || || *Writing with 0x0d reboots into bootloader* ||
