@@ -8,7 +8,7 @@ The MCU itself has to programmed (flashed) with a firmware application so that t
 
 A *_bootloader_* is a tiny program that runs on the MCU when it is powered-up, before the main application takes over. The role of the bootloader is to check for certain conditions and decide if the main application firmware should be updated. If it is to be updated, the bootloader will wait for commands/data from the host computer and flash this new information into the MCU. This bootloader can be developed to use the I2C/TWI interface to the host computer to receive its commands/data.
 
-This *_draft_* document is to plan for the development of this bootloader if necessary.
+This draft document is to plan for the development of this bootloader if necessary.
 
 = Details =
 
