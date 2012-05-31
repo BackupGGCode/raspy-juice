@@ -9,8 +9,8 @@ This *_draft_* document is to plan and describe the emulated I2C register set wi
 = Details =
 
 ==== Devices and I2C Addresses on the Raspy Juice Exp Board ====
- * MCU slave   (0x29) I2C write address: 0x72<br>
- * MCU slave   (0x29) I2C read  address: 0x73<br>
+ * MCU slave   (0x48) I2C write address: 0x90<br>
+ * MCU slave   (0x48) I2C read  address: 0x91<br>
  * RTC PCF8523 (0x68) I2C write address: 0xd0<br>
  * RTC PCF8523 (0x68) I2C read  address: 0xd1<br>
 
