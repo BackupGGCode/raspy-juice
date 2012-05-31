@@ -12,7 +12,7 @@ This *_draft_* document is to plan for the development of this bootloader if nec
 
 = Details =
 
-==== Summary of quick searches of AVR I2C/TWI bootloaders ====
+=== Summary of quick searches of AVR I2C/TWI bootloaders ===
   * [http://blog.schicks.net/wp-content/uploads/2009/09/bootloader_faq.pdf Brad Schick's AVR Bootloader FAQ]
   * [http://www.atmel.com/Images/doc8079.pdf Atmel AVR112: TWI Bootloader for devices without boot section]
   * [http://www.atmel.com/Images/doc8435.pdf Atmel AVR1327: Two Wire Interface (TWI) Slave Bootloader for Atmel AVR XMEGA]
@@ -20,6 +20,66 @@ This *_draft_* document is to plan for the development of this bootloader if nec
   * [http://www.dl5neg.de/bootloader/bootloader.html A bootloader for the ATmega8 AVR microprocessor]
   * [http://docwiki.gumstix.com/Robostix_i2c_bootloader Robostix i2c bootloader]
   * [http://www.openservo.com/viewcvs/OpenServo/ATmegaX_Bootloader/?root=cvs OpenServo Bootloader sources]
-  * [http://git.kopf-tisch.de/?p=twiboot Open-source(?) TWI bootloader for AVR]
+  * [http://git.kopf-tisch.de/?p=twiboot Open-source twiboot I2C/TWI  bootloader for AVR]
   * [http://code.google.com/p/avr-xboot/ avr-xboot Google Code project]
   * [http://www.scienceprog.com/testing-avr-universal-bootloader-on-atmega128/ Testing AVR universal bootloader on Atmega128]
+
+The open-sourced *_ "twiboot I2C/TWI  bootloader for AVR" _* listed above compiles with AVR Studio 4 and avr-gcc (WinAVR) almost out of the box. The source also comes with a small linux application that programs the MCU through the I2C/TWI interface. With small patching for MCU type and LED pin re-definition, twiboot has been adopted for the Raspy Juice I2C/TWI bootloading.
+
+=== Basic Description of _twiboot_ ===
+On power-up or on reset, twiboot will flash the LED rapidly awaiting commands from the host computer for 1 second. During this period, the bootloader has an I2C slave address of 0x29.
+
+{{{
+root@bg3:~# i2cdetect -r -y 2
+     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
+00:          -- -- -- -- -- -- -- -- -- -- -- -- --
+10: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+20: -- -- -- -- -- -- -- -- -- 29 -- -- -- -- -- --
+30: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+40: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+50: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+60: -- -- -- -- -- -- -- -- 68 -- -- -- -- -- -- --
+70: -- -- -- -- -- -- -- --
+root@bg3:~# root
+}}}
+In the above log of Juice tested against a beagleboard sitting on the I2C bus #2, *0x68* shows the presence of the former's PCF8523 real-time clock chip, and *0x29* shows the AVR in bootloader mode.
+If commanded during this one-second period, the bootloader will wait for further instructions from the host computer, else it will attempt to start the main firmware application already present in the MCU.
+
+{{{
+root@bg3:~# i2cdetect -r -y 2
+     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
+00:          -- -- -- -- -- -- -- -- -- -- -- -- --
+10: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+20: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+30: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+40: -- -- -- -- -- -- -- -- 48 -- -- -- -- -- -- --
+50: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+60: -- -- -- -- -- -- -- -- 68 -- -- -- -- -- -- --
+70: -- -- -- -- -- -- -- --
+root@bg3:~#
+}}}
+In the above log, the bootloader has timed-out or exited, and started the main application firmware. This firmware has now adopted an I2C address of *0x48*.
+
+=== Reprogramming/flashing Juice with twiboot ===
+Flashing the Juice AVR chip is by using the command:
+{{{
+root@bg3:~# twiboot -a 0x29 -d /dev/i2c-2 -w flash:juice.hex
+}}}
+However, the AVR chip must be forced into the bootloader mode before the above command can work. There are two ways to achieve this:
+
+==== The hardware way ==== 
+Reset the chip by shorting the ICSP header pins of reset and ground. These are pins 5 and 6 on the header. One would have a one-second period to type the above command line to flash the MCU.
+
+==== The software way ====
+The easier way is that if an application firmware already existed on the MCU and has provisions for recognising an I2C command to go into reset/bootloader mode. As such, it should be almost mandatory to write the main application firmware to recognise such a reset command. Juice main application firmware is being developed to recognise such an I2C command. Then, re-flashing the firmware will look like the below command line and log:
+{{{
+root@bg3:~# i2cset -y 2 0x48 0xb0 0x0d ; twiboot -a 0x29 -d /dev/i2c-2 -w flash:juice.hex
+device         : /dev/i2c-2       (address: 0x29)
+version        : TWIBOOT m168v2.1”
+                                  €< (sig: 0x1e 0x94 0x0b => unknown)
+flash size     : 0x3c00 / 15360   (0x80 bytes/page)
+eeprom size    : 0x0200 /   512
+writing flash  : [**************************************************á] (4716)
+verifing flash : [**************************************************] (4716)
+root@bg3:~#
+}}}
