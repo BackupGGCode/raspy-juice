@@ -12,4 +12,7 @@ Add your content here.  Format your content with:
   * Headings, paragraphs, and lists
   * Automatic links to other wiki pages
 
-http://carboncopycat.files.wordpress.com/2012/07/juice-r1-conndiag.png
+
+https://raspy-juice.googlecode.com/svn/wiki/juice-r1-conndiag.png
+
+
