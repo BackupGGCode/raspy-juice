@@ -2,6 +2,7 @@
 
 = Introduction =
 
+= // Work-in-progress 2012-07-26  12:36 hrs SGT // =
 Add your content here.
 
 
@@ -14,5 +15,83 @@ Add your content here.  Format your content with:
 
 
 https://raspy-juice.googlecode.com/svn/wiki/juice-r1-conndiag.png
+
+=== 2.1 RPi GPIO header ===
+See description on http://elinux.org/Rpi_Low-level_peripherals
+
+=== 2.2 DC Power connector ===
+|| *Pin No. * || *Pin Name* || *Description* ||
+|| 1 || GND  || Ground connection ||
+|| 2 || +VIN || 6 - 23V positive input, reverse-polarity protected. ||
+
+
+=== 2.3 Console RS232 port and jack ===
+The two connectors are wired in parallel and only one of these connectors may used at any one time. These ports provide for an RS232 level-translated of the Raspberry Pi console serial port signals (from the above GPIO header), to connect to a laptop computer or other embedded devices.
+
+===== 2.3.1 JST connector =====
+|| *Pin No. * || *Pin Name* || *Description* ||
+|| 1 || GND || Ground connection ||
+|| 2 || CON-TX  || RS232-level RPi console TX output signal. ||
+|| 3 || CON-RX  || RS232-level RPi console RX input signal. ||
+
+===== 2.3.2 Stereo 2.5mm jack =====
+|| *Pin No. * || *Pin Name* || *Description* ||
+|| Ring   || GND || Ground connection ||
+|| Tip    || CON-TX  || RS232-level RPi console TX output signal. ||
+|| Middle || CON-RX  || RS232-level RPi console RX input signal. ||
+
+
+=== 2.4 AVR RS232 port ===
+From the expansion AVR microcontroller using a software-emulated UART, this port provides an RS232-level interface for connection to a computer, or other embedded devices. The transmission and reception of the data is through an application firmware service in the microcontroller, and the host Raspberry Pi interfaces to the firmware service through the I2C interface in the GPIO header.
+
+|| *Pin No. * || *Pin Name* || *Description* ||
+|| 1 || GND || Ground connection ||
+|| 2 || AVR-232TX  || RS232-level AVR TX output signal. ||
+|| 3 || AVR-232RX  || RS232-level AVR RX input signal. ||
+
+=== 2.5 AVR RS485 port ===
+From the expansion AVR microcontroller using the USART, this port provides an RS485-level half-duplex interface for connection to other RS485-capable devices. The transmission and reception of the data is through an application firmware service in the microcontroller, and the host Raspberry Pi interfaces to the firmware service through the I2C interface in the GPIO header. No RS485 termination (ie., pullups/pulldowns/impedance-control) is provided in the PCB board level -- these may may configured at the last-mile connector.
+
+|| *Pin No. * || *Pin Name* || *Description* ||
+|| 1 || GND || Ground connection ||
+|| 2 || AVR-485A  || RS485-level A input/output signal. ||
+|| 3 || AVR-485B  || RS485-level B input/output signal. ||
+
+=== 2.6 Servo [1..4] Ports ===
+
+|| *Pin No. * || *Pin Name* || *Description* ||
+|| 1 || GND     || Ground connection ||
+|| 2 || +5V     || +5V servo power supply output. A total of 2A is available for all 4 ports, through a poly-resettable fuse. ||
+|| 3 || S[1..4] || Servo control signal at +3.3V logic levels. ||
+
+
+=== 2.7 AVR ICSP programming port ===
+This is the standard Atmel(c) AVR 6-pin programming header. 
+
+|| *Description* || *Pin* || *Pin* || *Description* ||
+|| MISO - communications to an AVR In-System Programmer || 1 || 2 || VCC - Target power ||
+|| SCK  - communications to an AVR In-System Programmer || 3 || 4 || MOSI - communications to an AVR In-System Programmer ||
+|| RESET - Target AVR microcontroller reset signal      || 5 || 6 || GND - Ground connection ||
+
+=== 2.8 I2C Debug header ===
+Originally intended for debugging, this unstuffed header may be used for I2C expansion. The +3.3V output power source pin is supplied by the Raspy Juice on-board +3.3V regulator, and a total of 450mA (for the AVR microcontroller, AVR expansion header +3.3V power output pin and this pin) is available.
+|| *Pin No. * || *Pin Name* || *Description* ||
+|| 1 || +3V3 output|| +3V3 power output source. (Total of 450mA available, //see text//). ||
+|| 2 || RPI-SDA || Directly connected to the above RPi GPIO header (pin 3) SDA signal. ||
+|| 3 || RPI-SCL || Directly connected to the above RPi GPIO header (pin 5) SCL signal. ||
+|| 4 || RPI-GPIO4 || Directly connected to the above RPi GPIO header (pin 7) GPIO4 signal. ||
+|| 5 || GND      || Ground connection.  ||
+
+=== 2.9 AVR Expansion header ===
+Unused or spare pins of AVR microcontroller are routed here.
+
+|| *Description* || *Pin* || *Pin* || *Description* ||
+|| GND  || 1 || 2  || +3V3 ||
+|| ADC6 || 3 || 4  || PB3  ||
+|| ADC7 || 5 || 6  || PB2  ||
+|| PD6  || 7 || 8  || PB1  ||
+|| PD5  || 9 || 10 || PB0  ||
+
+
 
 
