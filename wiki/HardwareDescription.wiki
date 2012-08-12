@@ -1,20 +1,27 @@
-#summary One-sentence summary of this page.
+#summary General Hardware Description of Raspy Juice Exp Board.
 
 = Introduction =
 
-= // Work-in-progress 2012-07-26  12:36 hrs SGT // =
-Add your content here.
-
 Raspy Juice is an experimental expansion board to supply a Raspberry Pi (RPi) host computer with a regulated +5V from a wide-range voltage source. The board also contains a real-time clock, an RS232-level translator for the host console serial port, and a expansion AVR ATmega168A  microcontroller (MCU). This MCU provides the service of controlling 4 channels of RC servo outputs, an RS485 interface, and a half-duplex software-based RS232 interface. In addition, the spare pins of the MCU are brought to an expansion header which may be used for other purposes. The MCU itself is interfaced to the host computer through an I2C/TWI interface, in which the former is a slave device. 
 
-= Details =
+= 1 Details =
 
-Add your content here.  Format your content with:
-  * Text in *bold* or _italic_
-  * Headings, paragraphs, and lists
-  * Automatic links to other wiki pages
+=== 1.1 Main Features ===
+  * 6-23V input to 5V, 3A high-efficiency (>80%) buck regulator with input polarity protection.
+The main feature of this expansion board is to supply the Raspberry Pi host computer with a regulated +5V through the GPIO header. With the wide voltage input range, the Raspberry Pi can be powered from a wide variety of external sources such as batteries, 12V power adapters, solar battery sources, etc. Additional +5V power outputs are also available at the pins of the JST servo ports connectors.
+  * RS232-level translated Raspberry Pi console port with either 2.5mm stereo jack or JST connector.
+  * RTC based on NXP PCF8523 with backup power capacitor.
+=== 1.2 Secondary Features ===
+  * Atmel ATmega168A AVR microcontroller, running at +3.3V, 14.7456MHz and as a slave I2C device to the Raspberry Pi host computer.
+  * Secondary +3.3 450mA high-efficiency buck regulator
+  * 4-channel RC servo port with JST connector
+  * RS485 interface to USART0 of the AVR microcontroller.
+  * RS232 interface to the programmable pins of the AVR microcontroller.
+  * Expansion header of unused programmable pins of the microcontroller.
 
 
+
+= 2 Module Conections =
 https://raspy-juice.googlecode.com/svn/wiki/juice-r1-conndiag.png
 
 === 2.1 RPi GPIO header ===
@@ -91,9 +98,9 @@ Originally intended for debugging, this unstuffed header may be used for I2C exp
 Unused or spare pins of AVR microcontroller are routed here.
 FixMe:
   * All signals here are series-terminated with 470ohm resistors.
-  * PB[0..3] and PD5..6]  are +5v over-voltage protected with diodes.
+  * PB[0..3] and PD[5..6]  are +5v over-voltage protected with diodes.
   * ADC[6..7] are +5V tolerant.
-  * Better to put sub-schemaatics here.
+  * Schematics here.
  
 || *Description* || *Pin* || *Pin* || *Description* ||
 || GND  || 1 || 2  || +3V3 ||
@@ -101,5 +108,3 @@ FixMe:
 || ADC7 || 5 || 6  || PB2  ||
 || PD6  || 7 || 8  || PB1  ||
 || PD5  || 9 || 10 || PB0  ||
-
-
