@@ -67,10 +67,10 @@ root@bg3:~# twiboot -a 0x29 -d /dev/i2c-2 -w flash:juice.hex
 }}}
 However, the AVR chip must be forced into the bootloader mode before the above command can work. There are two ways to achieve this:
 
-==== The hardware way ==== 
+===== The hardware way ===== 
 Reset the chip by shorting the ICSP header pins of reset and ground. These are pins 5 and 6 on the header. One would have a one-second period to type the above command line to flash the MCU.
 
-==== The software way ====
+===== The software way =====
 The easier way is that if an application firmware already existed on the MCU and has provisions for recognising an I2C command to go into reset/bootloader mode. As such, it should be almost mandatory to write the main application firmware to recognise such a reset command. Juice main application firmware is being developed to recognise such an I2C command. Then, re-flashing the firmware will look like the below command line and log:
 {{{
 root@bg3:~# i2cset -y 2 0x48 0xb0 0x0d ; twiboot -a 0x29 -d /dev/i2c-2 -w flash:juice.hex
@@ -83,3 +83,98 @@ writing flash  : [**************************************************á] (4716)
 verifing flash : [**************************************************] (4716)
 root@bg3:~#
 }}}
+
+
+== Raspberry Pi with Debian Wheezy ==
+----
+
+Testing Raspy Juice with Raspberry Pi stock Debian image of Wheezy. I2C modules are blacklisted by default in /etc/modprobe.d/raspi-blacklist.conf
+{{{
+Reason of
+# blacklist spi and i2c by default (many users don't need them)
+}}}
+It's OK because modules can be preloaded at linux boot time in /etc/modules.conf or /etc/modules
+
+Add to /etc/modules (_you'd have to be root to do this, or sudo_) and reboot.
+{{{
+i2c-dev
+i2c-bcm2708
+}}}
+
+After which 
+{{{
+pi@rpdev /etc $ ls -l /dev/*i2c*
+crw-rw---T 1 root root 89, 0 Aug  4 04:19 /dev/i2c-0
+crw-rw---T 1 root root 89, 1 Aug  4 04:19 /dev/i2c-1
+}}}
+
+For interacting with I2C busses and devices, the tools will have to be installed. Also, non-root users may need to be upgraded to interact with I2C devices.
+{{{
+sudo apt-get update
+sudo apt-get install i2c-tools
+sudo usermod -aG i2c yourusername
+}}}
+
+Testing the above tools installation
+{{{
+pi@rpdev /etc $ /usr/sbin/i2cdetect -l
+i2c-0    i2c           bcm2708_i2c.0                       I2C adapter
+i2c-1    i2c           bcm2708_i2c.1                       I2C adapter
+
+pi@rpdev ~ $ /usr/sbin/i2cdetect -y 0
+0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
+00:          -- -- -- -- -- -- -- -- -- -- -- -- --
+10: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+20: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+30: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+40: -- -- -- -- -- -- -- -- 48 -- -- -- -- -- -- --
+50: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+60: -- -- -- -- -- -- -- -- 68 -- -- -- -- -- -- --
+70: -- -- -- -- -- -- -- --
+}}}
+
+Checkout source code from this site 
+{{{
+sudo apt-get update
+sudo apt-get install subversion
+cd
+svn checkout http://raspy-juice.googlecode.com/svn/trunk/ raspy-juice-read-only
+}}}
+
+Build the AVR _twiboot_ I2C/TWI uploader
+{{{
+cd ~/raspy-juice-read-only/bootloader/razzor-twiboot-ca2a0a9/linux/
+make
+sudo cp twiboot /usr/local/bin
+}}}
+[*_It is found that if libi2c-dev was installed prior to the above command, the application will not build properly. So remove it before performing the above step._*]
+
+Install tools for linux AVR code development
+{{{
+sudo apt-get update
+sudo apt-get install gcc-avr binutils-avr avr-libc libi2c-dev
+}}}
+
+Build the AVR firmware service application
+{{{
+cd ~/raspy-juice-read-only/tests
+make -f Makefile.twi 
+}}}
+
+Upload and flash the AVR microcontroller
+{{{
+/usr/sbin/i2cset -y 0 0x48 0xb0 0x0d  ; sleep 0.5 ; twiboot -a 0x29 -w flash:juice.hex
+}}}
+[*_The above assumes that the AVR has a firmware application that recognises the reboot command of '0xb0 0x0d'. If the AVR-PD7 LED on Raspy Juice did not flash rapidly during the above step, then the hardware way is required to reboot the AVR microcontroller prior to completing the above command: a. Type the above command but don't hit enter key, b. Briefly short pins 5 and 6 on the AVR-ISP header (yikes) but the LED will start to flash rapidly, c. Press the  enter key._*]
+
+==== Testting with an RC servo ====
+Plug in an RC servo into Servo 1 port.
+{{{
+/usr/sbin/i2cset -y 0 0x48 1 1000 w
+/usr/sbin/i2cset -y 0 0x48 1 2000 w
+while [ 1 ] ; do /usr/sbin/i2cset -y 0 0x48 1 1000 w ; sleep 0.5 ; /usr/sbin/i2cset -y 0 0x48 1 2000 w ; sleep 0.5 ; done
+^C
+}}}
+
+
+----
