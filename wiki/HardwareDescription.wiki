@@ -1,4 +1,5 @@
 #summary General Hardware Description of Raspy Juice Exp Board.
+#labels Featured
 
 = Introduction =
 
