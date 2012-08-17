@@ -1,4 +1,5 @@
 #summary Draft implementation plan of Raspy Juice bootloader.
+#labels Featured
 
 = Introduction =
 
