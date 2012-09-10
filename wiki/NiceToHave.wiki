@@ -1,0 +1,25 @@
+#summary Dumping ground for Juice firmware services.
+
+= Introduction =
+* Dumping ground. To do list. Desires. Wishes. Must have. Nice to have. *
+
+= Details =
+
+Add your content here.  Format your content with:
+  * Text in *bold* or _italic_
+  * Headings, paragraphs, and lists
+  * Automatic links to other wiki pages
+
+  # I2C read-back of SVN or version number plus some descriptive text.
+  # Configurable baud rate for RS232 interface.
+  # Configurable baud rate for RS485 interface.
+  # Multiple byte data read back for RS232 service.
+  # Multiple byte data read back for RS485 service.
+  # Read back of RS232 service FIFO levels.
+  # Read back of RS485 service FIFO levels.
+  # Reconfigure PB0..PB3 into RC servo PWM outputs.
+  # Reconfigure PC0..PC3 RC servo outputs into GPIO.
+  # Reconfigure PC0..PC3 RC servo outputs into ADC inputs.
+  # Use PD7-LED as linux interrupt/event generator (_hard_).
+  # Implementation of microcontroller watchdog.
+  # Detection of hardware lockups.
