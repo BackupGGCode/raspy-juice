@@ -4,9 +4,9 @@
 
 Add your content here.
 
-*DRAFT DRAFT DRAFT*
+*DRAFT DRAFT DRAFT -- DO NOT RELY YET :-(*
 
-Raspy Juice is primarily a power supply board for the Raspberry Pi (RPi) supplying a regulated +5V via the GPIO header, and with added conveniences of a real-time clock (RTC) and an RS232-level console port. However, it also has a Atmel ATmega168A AVR microcontroller attached to the RPi as an I2C slave, and has interfaces of its pins brought out for simple interfacing experiments. See HardwareDescription .
+Raspy Juice (*_Juice_*) is primarily a power supply board for the Raspberry Pi (*_RPi_*) supplying a regulated +5V via the GPIO header, and with added conveniences of a real-time clock (RTC) and an RS232-level console port. However, it also has a Atmel ATmega168A AVR microcontroller (*_MCU_*) attached to the RPi as an I2C slave, and has interfaces of its pins brought out for simple interfacing experiments. See HardwareDescription. The MCU itself is running a firmware service that emulates an I2C register set, which allows a userspace application to control the interfaces.
 
 This document is to show how to interact with this AVR microcontroller from sel-fwritten userspace programs.
 
@@ -17,14 +17,40 @@ Add your content here.  Format your content with:
   * Headings, paragraphs, and lists
   * Automatic links to other wiki pages
 
-For a userspace application to communicate with the AVR microcontroller, the are several pre-requites that must be met. (1) linux kernel must be enabled with the I2c bus and (2) the Raspy Juice microcontroller must be seen as an I2C slave (3) communicate with Raspy Juice firmware services with its emulated I2C registers.
+For a userspace application to communicate with the AVR microcontroller, the are several pre-requites that must be met. 
+  *(1) linux kernel must be enabled with the I2c bus and 
+  *(2) the Raspy Juice microcontroller must be seen as an I2C slave 
+  *(3) communicate with Raspy Juice firmware services with its emulated I2C registers.
 
-Setting up the I2C linux kernel bus
+=== Setting up the I2C linux kernel bus ===
+Generally everything written here is for the RPi running the Raspbian/Debian/Wheezy/armhf stock distribution from the Raspberry Pi foundation.
+In this distribution, the I2C modules are blacklisted by default in */etc/modprobe.d/raspi-blacklist.conf*. It is OK to leave this file untouched, because modules can be instrcuted to preload at debian linux boot time by the /etc/modules.conf or */etc/modules* files.
 
-Verifying Raspy Juice as an I2C device on the kernel bus
+Edit */etc/modules* and add the two lines so that it will at least look like the 2 i2c lines are there. (you'd have to be root to do this, or sudo) and reboot.
+{{{
+# /etc/modules: kernel modules to load at boot time.
+#
+# This file contains the names of kernel modules that should be loaded
+# at boot time, one per line. Lines beginning with "#" are ignored.
+# Parameters can be specified after the module name.
 
-Reading / writing to Raspy Juice I2C registers
+snd-bcm2835
+i2c-dev
+i2c-bcm2708
+}}}
 
-Reading the firmware version
+After which
 
-Controlling the servo outputs
+pi@rpdev /etc $ ls -l /dev/*i2c*
+crw-rw---T 1 root root 89, 0 Aug  4 04:19 /dev/i2c-0
+crw-rw---T 1 root root 89, 1 Aug  4 04:19 /dev/i2c-1
+
+For interacting with I2C busses and devices, the tools will have to be installed. Also, non-root users may need to be upgraded to interact with I2C devices. 
+
+=== Verifying Raspy Juice as an I2C device on the kernel bus ===
+
+=== Reading / writing to Raspy Juice I2C registers ===
+
+==== Reading the firmware version ====
+
+==== Controlling the servo outputs ====
