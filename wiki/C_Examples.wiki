@@ -8,7 +8,7 @@ Add your content here.
 
 Raspy Juice (*_Juice_*) is primarily a power supply board for the Raspberry Pi (*_RPi_*) supplying a regulated +5V via the GPIO header, and with added conveniences of a real-time clock (RTC) and an RS232-level console port. However, it also sports an Atmel ATmega168A AVR microcontroller (*_MCU_*) attached to the RPi as an I2C slave, and has its GPIO and analog pins exposed out for interfacing experiments. See HardwareDescription. The MCU itself is running a firmware service that emulates an I2C register set, which allows a userspace application to control and interact with the interfaces.
 
-This document is to show how to interact with this AVR microcontroller from self-written userspace programs.
+This document is to show how to interact with this AVR microcontroller from user-written application programs.
 
 = 2. Prerequisites =
 
