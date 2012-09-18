@@ -1,16 +1,16 @@
-#Userpace example of interactiing with Raspy Juice.
+#Userspace example of interacting with Raspy Juice.
 
-= 1. Introduction =
+= 1. Introduction *DRAFT DRAFT DRAFT -- DO NOT RELY YET :-(* =
 
 Add your content here.
 
-*DRAFT DRAFT DRAFT -- DO NOT RELY YET :-(*
 
-Raspy Juice (*_Juice_*) is primarily a power supply board for the Raspberry Pi (*_RPi_*) supplying a regulated +5V via the GPIO header, and with added conveniences of a real-time clock (RTC) and an RS232-level console port. However, it also has a Atmel ATmega168A AVR microcontroller (*_MCU_*) attached to the RPi as an I2C slave, and has interfaces of its pins brought out for simple interfacing experiments. See HardwareDescription. The MCU itself is running a firmware service that emulates an I2C register set, which allows a userspace application to control the interfaces.
+
+Raspy Juice (*_Juice_*) is primarily a power supply board for the Raspberry Pi (*_RPi_*) supplying a regulated +5V via the GPIO header, and with added conveniences of a real-time clock (RTC) and an RS232-level console port. However, it also has a Atmel ATmega168A AVR microcontroller (*_MCU_*) attached to the RPi as an I2C slave, and has its GPIO and analog pins exposed out for simple interfacing experiments. See HardwareDescription. The MCU itself is running a firmware service that emulates an I2C register set, which allows a userspace application to control and interact with the interfaces.
 
 This document is to show how to interact with this AVR microcontroller from sel-fwritten userspace programs.
 
-= 2. Details =
+= 2. Pre-requisites =
 
 For a userspace application to communicate with the AVR microcontroller, the are several pre-requites that must be met. 
   *(1) linux kernel must be enabled with the I2c bus and 
@@ -19,7 +19,7 @@ For a userspace application to communicate with the AVR microcontroller, the are
 
 === 2.1 Setting up the I2C linux kernel bus ===
 Generally everything written here is for the RPi running the Raspbian/Debian/Wheezy/armhf stock distribution from the Raspberry Pi foundation.
-In this distribution, the I2C modules are blacklisted by default in */etc/modprobe.d/raspi-blacklist.conf*. It is OK to leave this file untouched, because modules can be instrcuted to preload at debian linux boot time by the /etc/modules.conf or */etc/modules* files.
+In this distribution, the I2C modules are blacklisted by default in */etc/modprobe.d/raspi-blacklist.conf*. It is OK to leave this file untouched, because modules can be instructed to preload at debian linux boot time by the /etc/modules.conf or */etc/modules* files.
 
 Edit */etc/modules* and add the two lines so that it will at least look like the two i2c lines are there. (you'd have to be root to do this, or sudo) and reboot.
 {{{
@@ -86,22 +86,62 @@ pi@rpdev ~ $
 
 }}}
 
-=== 2.3 Reading / writing to Raspy Juice I2C registers ===
+= 3. Communicating with Raspy Juice =
 
-==== 2.3.1 Opening a I2C bus device ====
+Reading / writing to Raspy Juice I2C registers. See I2CemulatedSlaveRegisters. Need i2c-dev and libraries.
 
-==== 2.3.2 Reading and Writing to a Juioe I2C register ====
+{{{
+sudo apt-get update
+sudo apt-get install libi2c-dev
+}}}
 
-==== 2.3.3 Reading the status register ===
 
-==== 2.3.4 Reading the firmware version ====
+=== 3.1 Opening a I2C bus device ===
 
-==== 2.3.5 Controlling the servo outputs ====
+{{{
+#include <linux/i2c-dev.h>
+#include <linux/fcntl.h>
 
-==== 2.3.6 Reading the analog-to-digital convertors ====
+    file = open(devname, O_RDWR);
+    if (file < 0) {
+      /* ERROR HANDLING; you can check errno to see what went wrong */
+      printf("open %s: error = %d\n", devname, file);
+      exit(1);
+    }
+    else
+      printf("open %s: succeeded.\n", devname);
 
-==== 2.3.7 RS232 Interface ====
+    if (ioctl(file, I2C_SLAVE, addr) < 0) {
+      /* ERROR HANDLING; you can check errno to see what went wrong */
+      printf("open i2c slave 0x%02x: error = %s\n", addr, "dunno");
+      exit(1);
+    }
+    else
+      printf("open i2c slave 0x%02x: succeeded.\n", addr);
+}}}
 
-==== 2.3.8 RS485 Interface ====
+=== 3.2 Reading and Writing to a Juice I2C register ===
+Using the libi2c library call for read byte,
+{{{
+        rval = i2c_smbus_read_byte_data(file, subreg); 
+}}}
 
-==== 2.3.9 GPIO Interface ====
+Write byte
+{{{
+        rval = i2c_smbus_write_byte_data(file, subreg, data);
+}}}
+
+
+=== 3.3 Reading the status register ===
+
+=== 3.4 Reading the firmware version ===
+
+=== 3.5 Controlling the servo outputs ===
+
+=== 3.6 Reading the analog-to-digital convertors ===
+
+=== 3.7 RS232 Interface ===
+
+=== 3.8 RS485 Interface ===
+
+=== 3.9 GPIO Interface ===
