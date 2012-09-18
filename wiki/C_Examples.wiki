@@ -1,0 +1,30 @@
+#Userpace example of interactiing with Raspy Juice.
+
+= Introduction =
+
+Add your content here.
+
+*DRAFT DRAFT DRAFT*
+
+Raspy Juice is primarily a power supply board for the Raspberry Pi (RPi) supplying a regulated +5V via the GPIO header, and with added conveniences of a real-time clock (RTC) and an RS232-level console port. However, it also has a Atmel ATmega168A AVR microcontroller attached to the RPi as an I2C slave, and has interfaces of its pins brought out for simple interfacing experiments. See HardwareDescription .
+
+This document is to show how to interact with this AVR microcontroller from sel-fwritten userspace programs.
+
+= Details =
+
+Add your content here.  Format your content with:
+  * Text in *bold* or _italic_
+  * Headings, paragraphs, and lists
+  * Automatic links to other wiki pages
+
+For a userspace application to communicate with the AVR microcontroller, the are several pre-requites that must be met. (1) linux kernel must be enabled with the I2c bus and (2) the Raspy Juice microcontroller must be seen as an I2C slave (3) communicate with Raspy Juice firmware services with its emulated I2C registers.
+
+Setting up the I2C linux kernel bus
+
+Verifying Raspy Juice as an I2C device on the kernel bus
+
+Reading / writing to Raspy Juice I2C registers
+
+Reading the firmware version
+
+Controlling the servo outputs
