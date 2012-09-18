@@ -1,6 +1,6 @@
 #Userpace example of interactiing with Raspy Juice.
 
-= Introduction =
+= 1. Introduction =
 
 Add your content here.
 
@@ -10,23 +10,18 @@ Raspy Juice (*_Juice_*) is primarily a power supply board for the Raspberry Pi (
 
 This document is to show how to interact with this AVR microcontroller from sel-fwritten userspace programs.
 
-= Details =
-
-Add your content here.  Format your content with:
-  * Text in *bold* or _italic_
-  * Headings, paragraphs, and lists
-  * Automatic links to other wiki pages
+= 2. Details =
 
 For a userspace application to communicate with the AVR microcontroller, the are several pre-requites that must be met. 
   *(1) linux kernel must be enabled with the I2c bus and 
   *(2) the Raspy Juice microcontroller must be seen as an I2C slave 
   *(3) communicate with Raspy Juice firmware services with its emulated I2C registers.
 
-=== Setting up the I2C linux kernel bus ===
+=== 2.1 Setting up the I2C linux kernel bus ===
 Generally everything written here is for the RPi running the Raspbian/Debian/Wheezy/armhf stock distribution from the Raspberry Pi foundation.
 In this distribution, the I2C modules are blacklisted by default in */etc/modprobe.d/raspi-blacklist.conf*. It is OK to leave this file untouched, because modules can be instrcuted to preload at debian linux boot time by the /etc/modules.conf or */etc/modules* files.
 
-Edit */etc/modules* and add the two lines so that it will at least look like the 2 i2c lines are there. (you'd have to be root to do this, or sudo) and reboot.
+Edit */etc/modules* and add the two lines so that it will at least look like the two i2c lines are there. (you'd have to be root to do this, or sudo) and reboot.
 {{{
 # /etc/modules: kernel modules to load at boot time.
 #
@@ -38,19 +33,75 @@ snd-bcm2835
 i2c-dev
 i2c-bcm2708
 }}}
-
-After which
-
+Then reboot. After which, you should be able to list the i2c busses in the */dev* directory loike below:
+{{{
 pi@rpdev /etc $ ls -l /dev/*i2c*
 crw-rw---T 1 root root 89, 0 Aug  4 04:19 /dev/i2c-0
 crw-rw---T 1 root root 89, 1 Aug  4 04:19 /dev/i2c-1
+}}}
 
-For interacting with I2C busses and devices, the tools will have to be installed. Also, non-root users may need to be upgraded to interact with I2C devices. 
+=== 2.2 Verifying Raspy Juice as an I2C device on the kernel bus ===
+For interacting with I2C busses and devices, the proper tools will have to be installed.
 
-=== Verifying Raspy Juice as an I2C device on the kernel bus ===
+{{{
+sudo apt-get update
+sudo apt-get install i2c-tools
+}}}
+When the above tools are installed, a group called *_i2c_* is automatically made. When the above listing of /dev is performed again, the I2C busses will be owned by the group.
+{{{
+pi@rpdev /etc $ ls -l /dev/*i2c*
+crw-rw---T 1 root i2c 89, 0 Jan  1  1970 /dev/i2c-0
+crw-rw---T 1 root i2c 89, 1 Jan  1  1970 /dev/i2c-1
+}}}
 
-=== Reading / writing to Raspy Juice I2C registers ===
 
-==== Reading the firmware version ====
 
-==== Controlling the servo outputs ====
+Now, non-root users need to be upgraded to interact with I2C busses and devices. 
+{{{
+sudo usermod -aG i2c yourusername
+}}}
+
+
+Then, verify that Raspy Juice is on the I2C-0 bus.
+{{{
+pi@rpdev ~ $ ls -l /dev/i2c*
+crw-rw---T 1 root i2c 89, 0 Jan  1  1970 /dev/i2c-0
+crw-rw---T 1 root i2c 89, 1 Jan  1  1970 /dev/i2c-1
+
+pi@rpdev ~ $ i2cdetect -l
+i2c-0	i2c       	bcm2708_i2c.0                   	I2C adapter
+i2c-1	i2c       	bcm2708_i2c.1                   	I2C adapter
+
+pi@rpdev ~ $ i2cdetect -y 0
+     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
+00:          -- -- -- -- -- -- -- -- -- -- -- -- -- 
+10: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+20: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+30: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+40: -- -- -- -- -- -- -- -- 48 -- -- -- -- -- -- -- 
+50: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+60: -- -- -- -- -- -- -- -- UU -- -- -- -- -- -- -- 
+70: -- -- -- -- -- -- -- --                         
+pi@rpdev ~ $ 
+
+}}}
+
+=== 2.3 Reading / writing to Raspy Juice I2C registers ===
+
+==== 2.3.1 Opening a I2C bus device ====
+
+==== 2.3.2 Reading and Writing to a Juioe I2C register ====
+
+==== 2.3.3 Reading the status register ===
+
+==== 2.3.4 Reading the firmware version ====
+
+==== 2.3.5 Controlling the servo outputs ====
+
+==== 2.3.6 Reading the analog-to-digital convertors ====
+
+==== 2.3.7 RS232 Interface ====
+
+==== 2.3.8 RS485 Interface ====
+
+==== 2.3.9 GPIO Interface ====
