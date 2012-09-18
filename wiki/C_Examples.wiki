@@ -6,20 +6,20 @@ Add your content here.
 
 
 
-Raspy Juice (*_Juice_*) is primarily a power supply board for the Raspberry Pi (*_RPi_*) supplying a regulated +5V via the GPIO header, and with added conveniences of a real-time clock (RTC) and an RS232-level console port. However, it also has a Atmel ATmega168A AVR microcontroller (*_MCU_*) attached to the RPi as an I2C slave, and has its GPIO and analog pins exposed out for simple interfacing experiments. See HardwareDescription. The MCU itself is running a firmware service that emulates an I2C register set, which allows a userspace application to control and interact with the interfaces.
+Raspy Juice (*_Juice_*) is primarily a power supply board for the Raspberry Pi (*_RPi_*) supplying a regulated +5V via the GPIO header, and with added conveniences of a real-time clock (RTC) and an RS232-level console port. However, it also sports an Atmel ATmega168A AVR microcontroller (*_MCU_*) attached to the RPi as an I2C slave, and has its GPIO and analog pins exposed out for interfacing experiments. See HardwareDescription. The MCU itself is running a firmware service that emulates an I2C register set, which allows a userspace application to control and interact with the interfaces.
 
-This document is to show how to interact with this AVR microcontroller from sel-fwritten userspace programs.
+This document is to show how to interact with this AVR microcontroller from self-written userspace programs.
 
-= 2. Pre-requisites =
+= 2. Prerequisites =
 
-For a userspace application to communicate with the AVR microcontroller, the are several pre-requites that must be met. 
-  *(1) linux kernel must be enabled with the I2c bus and 
-  *(2) the Raspy Juice microcontroller must be seen as an I2C slave 
-  *(3) communicate with Raspy Juice firmware services with its emulated I2C registers.
+For a userspace application to interact with the AVR MCU interfaces, the are several prerequisites that must be met. 
+  # the linux kernel must be enabled with the I2c bus driver 
+  # the Raspy Juice MCU must be seen as an I2C slave on the I2C bus 
+  # communicate with the Raspy Juice firmware services through its emulated I2C registers, to control the interfaces.
 
-=== 2.1 Setting up the I2C linux kernel bus ===
+=== 2.1 Setting up the linux kernel I2C bus ===
 Generally everything written here is for the RPi running the Raspbian/Debian/Wheezy/armhf stock distribution from the Raspberry Pi foundation.
-In this distribution, the I2C modules are blacklisted by default in */etc/modprobe.d/raspi-blacklist.conf*. It is OK to leave this file untouched, because modules can be instructed to preload at debian linux boot time by the /etc/modules.conf or */etc/modules* files.
+In this distribution, the I2C modules are blacklisted by default in /etc/modprobe.d/raspi-blacklist.conf. It is OK to leave this file untouched, because modules can be instructed to pre-load at linux boot time by the /etc/modules.conf or */etc/modules* files.
 
 Edit */etc/modules* and add the two lines so that it will at least look like the two i2c lines are there. (you'd have to be root to do this, or sudo) and reboot.
 {{{
@@ -47,7 +47,7 @@ For interacting with I2C busses and devices, the proper tools will have to be in
 sudo apt-get update
 sudo apt-get install i2c-tools
 }}}
-When the above tools are installed, a group called *_i2c_* is automatically made. When the above listing of /dev is performed again, the I2C busses will be owned by the group.
+When the above tools are installed, a group called *_i2c_* is automatically created. When the above listing of /dev is performed again, the I2C busses will be co-owned by this group.
 {{{
 pi@rpdev /etc $ ls -l /dev/*i2c*
 crw-rw---T 1 root i2c 89, 0 Jan  1  1970 /dev/i2c-0
@@ -83,8 +83,9 @@ pi@rpdev ~ $ i2cdetect -y 0
 60: -- -- -- -- -- -- -- -- UU -- -- -- -- -- -- -- 
 70: -- -- -- -- -- -- -- --                         
 pi@rpdev ~ $ 
-
 }}}
+In the above log, _i2cdetect_ has detected two devices sitting on I2C bus 0 or /dev/i2c-0. *_'UU'_* is a device that has been registered with the kernel and generally unwise to interact with such a kernel-owned device. In this case, the Raspy Juice NXP8523 RTC has been registered with the kernel with an I2C slave address of 0x68. *_'48'_* is the Raspy Juice MCU with a firmware service emulating as an I2C slave device, sitting on the bus 0 with an address of *0x48*.
+
 
 = 3. Communicating with Raspy Juice =
 
