@@ -156,19 +156,21 @@ sudo apt-get update
 sudo apt-get install gcc-avr binutils-avr avr-libc libi2c-dev
 }}}
 
-Build the AVR firmware service application
+Build the AVR firmware service application.
 {{{
-cd ~/raspy-juice-read-only/tests
-make -f Makefile.twi 
+cd ~/raspy-juice-read-only/firmware
+make
 }}}
 
 Upload and flash the AVR microcontroller
 {{{
 /usr/sbin/i2cset -y 0 0x48 0xb0 0x0d  ; sleep 0.5 ; twiboot -a 0x29 -w flash:juice.hex
+make flashinstall
+
 }}}
 [*_The above assumes that the AVR has a firmware application that recognises the reboot command of '0xb0 0x0d'. If the AVR-PD7 LED on Raspy Juice did not flash rapidly during the above step, then the hardware way is required to reboot the AVR microcontroller prior to completing the above command: a. Type the above command but don't hit enter key, b. Briefly short pins 5 and 6 on the AVR-ISP header (yikes) but the LED will start to flash rapidly, c. Press the  enter key._*]
 
-==== Testting with an RC servo ====
+==== Testing with an RC servo ====
 Plug in an RC servo into Servo 1 port.
 {{{
 /usr/sbin/i2cset -y 0 0x48 1 1000 w
