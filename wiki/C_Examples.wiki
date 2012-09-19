@@ -96,32 +96,39 @@ sudo apt-get update
 sudo apt-get install libi2c-dev
 }}}
 
-
 === 3.1 Opening a I2C bus device ===
-
+The below example is a snippet to open the Raspy Juice as an I2C slave device and exit.
 {{{
 #include <linux/i2c-dev.h>
 #include <linux/fcntl.h>
+#include "../firmware/juice.h"
 
-    file = open(devname, O_RDWR);
+int main(int argc, char *argv[])
+{
+    char devbusname[] = "/dev/i2c-0";
+    int i2caddr = AVRSLAVE_ADDR;
+
+    file = open(devbusname, O_RDWR);
     if (file < 0) {
-      /* ERROR HANDLING; you can check errno to see what went wrong */
-      printf("open %s: error = %d\n", devname, file);
-      exit(1);
+        printf("open %s: error = %d\n", devbusname, file);
+        exit(1);
     }
     else
-      printf("open %s: succeeded.\n", devname);
+        printf("open %s: succeeded.\n", devbusname);
 
-    if (ioctl(file, I2C_SLAVE, addr) < 0) {
-      /* ERROR HANDLING; you can check errno to see what went wrong */
-      printf("open i2c slave 0x%02x: error = %s\n", addr, "dunno");
-      exit(1);
+    if (ioctl(file, I2C_SLAVE, i2caddr) < 0) {
+        printf("open i2c slave 0x%02x: error = %s\n\n", i2caddr, "dunno");
+        exit(1);
     }
     else
-      printf("open i2c slave 0x%02x: succeeded.\n", addr);
+        printf("open i2c slave 0x%02x: succeeded.\n\n", i2caddr);
+
+    return 0;
+}
 }}}
-
+The first two include header files are necessary for opening the I2C bus and device as a file, and the third include header file are the Raspy Juice constants. 
 === 3.2 Reading and Writing to a Juice I2C register ===
+To perform read and writes to the Raspy Juice emulated registers, the i2c-dev library calls of accessing I2C device registers are used.
 Using the libi2c library call for read byte,
 {{{
         rval = i2c_smbus_read_byte_data(file, subreg); 
@@ -131,13 +138,31 @@ Write byte
 {{{
         rval = i2c_smbus_write_byte_data(file, subreg, data);
 }}}
+Read word, or double-byte
+{{{
+        rval = i2c_smbus_write_byte_data(file, subreg, data);
+}}}
+Write word, or double-byte
+{{{
+        rval = i2c_smbus_write_word_data(file, subreg, data);
+}}}
+Sometimes, a call to one of the above may fail due to unforseen reasons, so the programmer may implement a retry mechanism for slightly more robust read/writes.
+
+=== 3.3 Controlling the servo outputs  ===
+The servo I2C registers taken a double-byte parameter specifying the PWM assertion period of 0.5ms to 2.5ms or, 500usec to 2500usec. So, for Juice servo register, this parameter is written as two bytes, the first byte being the low-significant byte, followed by the most-significant byte in usec (microseconds).
+
+{{{
+int rj_setservo(int chan, int usec)
+{
+    return i2c_smbus_write_word_data(file, chan, usec);
+}
+}}}
 
 
-=== 3.3 Reading the status register ===
 
 === 3.4 Reading the firmware version ===
 
-=== 3.5 Controlling the servo outputs ===
+=== 3.5 Reading the status register  ===
 
 === 3.6 Reading the analog-to-digital convertors ===
 
