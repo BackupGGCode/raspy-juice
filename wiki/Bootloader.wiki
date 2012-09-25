@@ -1,5 +1,5 @@
 #summary Draft implementation plan of Raspy Juice bootloader.
-#labels Featured
+#labels Deprecated
 
 = 1.0 Introduction =
 
