@@ -1,6 +1,6 @@
 #labels Featured
 #Instructions to update the Raspy Juice firmware.
-
+<wiki:toc max_depth="3" />
 = 1. Introduction =
 ----
 Raspy Juice (*_Juice_*) is primarily a power supply board for the Raspberry Pi (*_RPi_*) supplying a regulated +5V via the GPIO header, and with added conveniences of a real-time clock (RTC) and an RS232-level console port. However, it also sports an Atmel ATmega168A AVR microcontroller (*_MCU_*) attached to the RPi as an I2C slave, and has its GPIO and analog pins exposed out for interfacing experiments. See HardwareDescription. The MCU itself is running a firmware service that emulates an I2C register set, which allows a userspace application to control and interact with the interfaces.
@@ -19,7 +19,7 @@ For a user to interact with, and update the MCU firmware, there are several prer
   # the _bootloader_ tools must be installed or built
   # the firmware must be available or built
 
-=== 2.1 Setting up the linux kernel I2C bus ===
+== 2.1 Setting up the linux kernel I2C bus ==
 Generally everything written here is for the RPi running the Raspbian/Debian/Wheezy/armhf stock distribution from the Raspberry Pi foundation.
 In this distribution, the I2C modules are blacklisted by default in /etc/modprobe.d/raspi-blacklist.conf. It is OK to leave this file untouched, because modules can be instructed to pre-load at linux boot time by the /etc/modules.conf or */etc/modules* files.
 
@@ -42,7 +42,7 @@ crw-rw---T 1 root root 89, 0 Aug  4 04:19 /dev/i2c-0
 crw-rw---T 1 root root 89, 1 Aug  4 04:19 /dev/i2c-1
 }}}
 
-=== 2.2 Verifying Raspy Juice as an I2C device on the kernel bus ===
+== 2.2 Verifying Raspy Juice as an I2C device on the kernel bus ==
 For interacting with I2C busses and devices, the proper tools will have to be installed.
 
 {{{
@@ -78,10 +78,10 @@ pi@raspberry ~ $
 }}}
 In the above log, _i2cdetect_ has detected two devices sitting on I2C bus 0 or /dev/i2c-0. *_'UU'_* is a device that has been registered with the kernel and generally unwise to interact with such a kernel-owned device. In this case, the Raspy Juice NXP8523 RTC has been registered with the kernel with an I2C slave address of 0x68. *_'48'_* is the Raspy Juice MCU with a firmware service emulating as an I2C slave device, sitting on the bus 0 with an address of *0x48*.
 
-=== 2.3 Verifying the AVR to go into bootloader mode ===
+== 2.3 Verifying the AVR to go into bootloader mode ==
 There are two ways the AVR MCU can be commanded into bootloader mode. The bootloader mode is visible to the user by the rapidly flashing (*_AVR-PD7_*) LED on the PCBA.
 
-===== The software way ======
+==== The software way =====
 The easier way is that if the already existing application firmware in the MCU recognises a command-line statement to go into reset/bootloader mode. This can be tested by:
 {{{
 i2cset -y 2 0x48 0xb0 0x0d
@@ -89,11 +89,11 @@ i2cset -y 2 0x48 0xb0 0x0d
 If the AVR-PD7 LED did not flash rapidly for a period of one second, then the previously installed firmware does not recognise the command to go into bootloader mode, or that the firmware has failed. The recovery method is to use the *_hardware way_* described below.
 
 
-===== The hardware way ======
+==== The hardware way =====
 
 Reset the chip by shorting the AVR-ICSP header pins of reset and ground *_(yikes)_*. These are pins 5 and 6 on the header. The user will see the AVR-PD7 LED flash rapidly for a one-second period.
 
-=== 2.4 Installing the bootloader tools ===
+== 2.4 Installing the bootloader tools ==
 Checkout source code from this site 
 {{{
 sudo apt-get update
@@ -142,4 +142,3 @@ Plug in an RC servo into Servo 1 port.
 while [ 1 ] ; do /usr/sbin/i2cset -y 0 0x48 1 1000 w ; sleep 0.5 ; /usr/sbin/i2cset -y 0 0x48 1 2000 w ; sleep 0.5 ; done
 ^C
 }}}
-
