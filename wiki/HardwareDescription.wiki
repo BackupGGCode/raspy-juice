@@ -1,5 +1,5 @@
-#summary General Hardware Description of Raspy Juice Exp Board.
-#labels Featured
+#summary [to be deprecated] General Hardware Description of Raspy Juice Exp Board.
+#labels Deprecated
 
 = Introduction =
 
