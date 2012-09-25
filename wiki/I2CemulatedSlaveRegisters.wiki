@@ -1,4 +1,5 @@
 #summary Describes the I2C emulated slave register set of the Raspy Juice Exp Board.
+#labels Phase-Requirements
 
 = Introduction =
 
