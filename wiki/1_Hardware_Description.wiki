@@ -1,18 +1,20 @@
 #summary General Hardware Description of Raspy Juice Exp Board.
 #labels Featured
 
-= Introduction =
-
+= 1. Introduction =
+----
 Raspy Juice is an experimental expansion board to supply a Raspberry Pi (*RPi*) host computer with a regulated +5V from a wide-range voltage source. The board also contains a real-time clock, an RS232-level translator for the host console serial port, and an expansion AVR ATmega168A  microcontroller (MCU). This MCU provides the service of controlling 4 channels of RC servo outputs, an RS485 interface, and a half-duplex software-based RS232 interface. In addition, the spare pins of the MCU are brought to an expansion header which may be used for other purposes. The MCU itself is interfaced to the host computer through an I2C/TWI interface, in which the former is a slave device. 
+<br>
+<br>
 
-= 1 Details =
-
-=== 1.1 Main Features ===
+= 2. Details =
+----
+=== 2.1 Main Features ===
   * 6-23V input to 5V, 3A high-efficiency (>80%) buck regulator with input polarity protection.
 The main feature of this expansion board is to supply the RPi host computer with a regulated +5V through the GPIO header. With the wide voltage input range, the RPi can be powered from a wide variety of external sources such as batteries, 12V power adapters, solar battery sources, etc. Additional +5V power outputs are also available at the pins of the JST servo ports connectors.
   * RS232-level translated RPi console port with either 2.5mm stereo jack or JST connector.
   * RTC based on NXP PCF8523 with backup power capacitor.
-=== 1.2 Secondary Features ===
+=== 2.2 Secondary Features ===
   * Atmel ATmega168A AVR microcontroller, running at +3.3V, 14.7456MHz and as a slave I2C device to the RPi host computer.
   * Secondary +3.3 450mA high-efficiency buck regulator
   * 4-channel RC servo port with JST connector
@@ -21,8 +23,9 @@ The main feature of this expansion board is to supply the RPi host computer with
   * Expansion header of unused programmable pins of the microcontroller.
 
 
-
-= 2 Module Conections =
+<br>
+<br>
+= 3. Module Conections =
 https://raspy-juice.googlecode.com/svn/wiki/juice-r1-conndiag.png
 
 === 2.1 RPi GPIO header ===
