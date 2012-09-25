@@ -1,4 +1,5 @@
 #summary Userspace C examples of interacting with Raspy Juice.
+#labels Featured
 
 = 1. Introduction *DRAFT IN PROGRESS* =
 ----
