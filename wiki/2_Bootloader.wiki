@@ -1,18 +1,20 @@
-#summary Draft implementation plan of Raspy Juice bootloader.
+#summary Description of the Raspy Juice bootloader.
 #labels Featured
 
 = 1.0 Introduction =
-
+----
 *Raspy Juice* is an experimental expansion board with an AVR ATmega168A microcontroller (MCU) to provide the services of controlling 4 channels of RC servo outputs, an RS485 interface, and a half-duplex software-based RS232 interface. The MCU itself is interfaced to the host computer through an I2C/TWI interface, in which the former is a slave device. 
 
 The MCU itself has to programmed (flashed) with a firmware application so that the above services are operational. For the purpose of developing this firmware, the initial method of flashing the MCU is by using an _AVR Programmer_ with a 6-pin ICSP (in-circuit serial programming) header. However, this is inconvenient for users who do not own such a programming adapter. Also, it is foreseen that future updates of the firmware will need a means of being flashed into the MCU without the use of a programming adapter.
 
 A *_bootloader_* is a tiny program that runs on the MCU when it is powered-up, before the main application takes over. The role of the bootloader is to check for certain conditions and decide if the main application firmware should be updated. If it is to be updated, the bootloader will wait for commands/data from the host computer and flash this new information into the MCU. This bootloader can be developed to use the I2C/TWI interface to the host computer to receive its commands/data.
 
-This draft document is to plan for the development of this bootloader if necessary.
-----
+This page documents the bootloader of Raspy Juice.
+<br>
+<br>
+<br>
 = 2.0 Details =
-
+----
 == 2.1 Summary of quick searches of AVR I2C/TWI bootloaders ==
   * [http://blog.schicks.net/wp-content/uploads/2009/09/bootloader_faq.pdf Brad Schick's AVR Bootloader FAQ]
   * [http://www.atmel.com/Images/doc8079.pdf Atmel AVR112: TWI Bootloader for devices without boot section]
@@ -84,10 +86,10 @@ writing flash  : [**************************************************á] (4716)
 verifing flash : [**************************************************] (4716)
 root@bg3:~#
 }}}
-
-----
+<br>
+<br>
 = 3.0 Testing Raspy Juice on Raspberry Pi with Debian Wheezy =
-
+----
 Testing Raspy Juice with Raspberry Pi stock Debian image of Wheezy. I2C modules are blacklisted by default in /etc/modprobe.d/raspi-blacklist.conf
 {{{
 Reason of
