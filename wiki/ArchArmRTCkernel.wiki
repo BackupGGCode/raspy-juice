@@ -1,0 +1,54 @@
+#summary Building the ARCH ARM kernel for RTC driver.
+
+= Introduction =
+
+Since the sources for the RTC driver is not maintained as a linux source, you will have to build the kernel yourself, using the published patch.
+
+I got this recepie from Adnan at 2-Watt elements, but I have not tried it myself yet.
+
+= Details =
+
+Preparation of my build environment.
+{{{
+$ sudo apt-get install build-essential git patch libncurses5-dev
+$ sudo apt-get install libqt4-dev # optional for make xconfig #
+}}}
+Download the cross-compiler and copy to /usr/local/ (I used the linaro cross-compiler from Raspberry Pi github). 
+{{{
+$ cd
+$ git clone https://github.com/raspberrypi/tools.git rpi-tools.git
+$ sudo cp -rpv rpi-tools.git/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/* /usr/local
+}}}
+Download the Raspberry Pi linux sources.
+{{{
+$ cd
+$ git clone git://github.com/raspberrypi/linux.git rpi-linux.git
+}}}
+Apply the Raspy Juice patches for the RTC module.
+{{{
+$ cd rpi-linux.git
+$ patch -p1 < ../raspy-juice-read-only/linux-rtc/0001-rtc-pcf8523.patch
+$ patch -p1 < ../raspy-juice-read-only/linux-rtc/0002-pcf8523-i2c-register-dt.patch
+}}}
+Apply the configuration. Here, I ensure the drivers for the Raspberry Pi I2C modules are selected. Then select the NXP PCF8523 driver under the section of Real Time Clock. Save the config and exit.
+{{{
+$ cp arch/arm/configs/bcmrpi_defconfig .config
+$ make ARCH=arm CROSS_COMPILE=/usr/local/bin/arm-linux-gnueabihf- xconfig
+}}}
+Compile the kernel and modules.
+{{{
+$ make ARCH=arm CROSS_COMPILE=/usr/local/bin/arm-linux-gnueabihf- INSTALL_MOD_PATH=arch/arm/boot/ zImage modules modules_install
+}}}
+Mounted the SDcard onto the Ubuntu desktop, and copy the image and modules over to the SDcard.
+{{{
+$ sudo mkdir -p /mnt/sdX1 /mnt/sdX2
+$ sudo mount /dev/sdX1 /mnt/sdX1
+$ sudo mount /dev/sdX2 /mnt/sdX2
+
+$ cd arch/arm/boot
+$ sudo cp /mnt/sdb1/kernel.img kernel-rpi.img # make a backup #
+$ sudo cp zImage /mnt/sdX1/kernel.img
+$ sudo cp -rpv lib /mnt/sdb2
+$ sudo umount /mnt/sdX1 /mnt/sdX2
+}}}
+Removed the SDcard from the Ubuntu desktop, plug it in and power up the Raspberry Pi. 
