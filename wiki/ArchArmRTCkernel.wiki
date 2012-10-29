@@ -52,3 +52,65 @@ $ sudo cp -rpv lib /mnt/sdb2
 $ sudo umount /mnt/sdX1 /mnt/sdX2
 }}}
 Removed the SDcard from the Ubuntu desktop, plug it in and power up the Raspberry Pi. 
+
+= Compiling on Arch i686 =
+
+I have sucessfully compiled the kernel on my Arch i686 (32 bit) development box. It is basically the same as for Ubuntu, except for pacman being used instead of "apt-get install". I had to modify how to copy the lib sligthly. I also have automount on my dev box so there are no mount commands.
+
+{{{
+# pacman -S base-devel git qt svn
+$ svn checkout http://raspy-juice.googlecode.com/svn/trunk/
+raspy-juice-read-only
+$ git clone https://github.com/raspberrypi/tools.git rpi-tools.git
+sudo cp -rpv
+$ rpi-tools.git/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/* /usr/local
+$ git clone git://github.com/raspberrypi/linux.git rpi-linux.git
+$ cd rpi-linux.git/
+$ patch -p1 < ../raspy-juice-read-only/linux-rtc/0001-rtc-pcf8523.patch
+$ cp arch/arm/configs/bcmrpi_defconfig .config
+$ make ARCH=arm CROSS_COMPILE=/usr/local/bin/arm-linux-gnueabihf- xconfig
+$ cd arch/arm/boot/
+$ sudo cp /media/hd-sdc1/kernel.img kernel-rpi.img
+$ sudo cp zImage /media/hd-sdc1/kernel.img
+$ sudo cp -rpv lib/* /media/hd-sdc2/lib
+$ sudo chown -R root:root /media/hd-sdc2/lib
+$ sudo umount /media/hd-sdc1
+$ sudo umount /media/hd-sdc2
+}}}
+
+On Raspberry after boot, check that the driver is loaded:
+
+{{{
+# cd /var/log
+# grep pcf8523 kernel.log
+Oct 29 12:45:47 alarmpi kernel: [    4.682463] rtc-pcf8523 0-0068: chip found, driver version 1.0
+Oct 29 12:45:47 alarmpi kernel: [    4.701464] rtc-pcf8523 0-0068: rtc core: registered rtc-pcf8523 as rtc0
+
+}}}
+
+In order to set the timezone I had to install polkit and reboot:
+
+{{{
+# pacman -S polkit
+}}}
+
+Setting the clock and disabling ntpd:
+
+{{{
+# timedatectl set-timezone Europe/Stockholm
+# /sbin/hwclock --systohc –utc
+# systemctl disable openntpd.service
+}}}
+
+Reboot. 
+
+Unfortunately the rtc driver is loaded after the system tries to set system time from rtc:
+
+{{{
+# grep rtc0 /var/log/kernel.log
+Jan  1 01:00:07 alarmpi kernel: [    1.193329] drivers/rtc/hctosys.c: unable to open rtc device (rtc0)
+Jan  1 01:00:07 alarmpi kernel: [    4.661218] rtc-pcf8523 0-0068: rtc core: registered rtc-pcf8523 as rtc0
+]# date
+tor jan  1 01:24:07 CET 1970
+
+}}}
