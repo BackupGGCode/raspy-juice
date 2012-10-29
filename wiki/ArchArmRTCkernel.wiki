@@ -59,8 +59,7 @@ I have sucessfully compiled the kernel on my Arch i686 (32 bit) development box.
 
 {{{
 # pacman -S base-devel git qt svn
-$ svn checkout http://raspy-juice.googlecode.com/svn/trunk/
-raspy-juice-read-only
+$ svn checkout http://raspy-juice.googlecode.com/svn/trunk/raspy-juice-read-only
 $ git clone https://github.com/raspberrypi/tools.git rpi-tools.git
 $ sudo cp -rpv rpi-tools.git/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/* /usr/local
 $ git clone git://github.com/raspberrypi/linux.git rpi-linux.git
