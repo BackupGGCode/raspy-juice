@@ -8,7 +8,7 @@ I got this recepie from Adnan at 2-Watt elements, but I have not tried it myself
 
 = Details =
 
-Preparation of my build environment.
+Preparation of my build environment (Ubuntu).
 {{{
 $ sudo apt-get install build-essential git patch libncurses5-dev
 $ sudo apt-get install libqt4-dev # optional for make xconfig #
