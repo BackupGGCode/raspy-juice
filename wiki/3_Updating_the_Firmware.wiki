@@ -145,3 +145,46 @@ Plug in an RC servo into Servo 1 port.
 while [ 1 ] ; do /usr/sbin/i2cset -y 0 0x48 1 1000 w ; sleep 0.5 ; /usr/sbin/i2cset -y 0 0x48 1 2000 w ; sleep 0.5 ; done
 ^C
 }}}
+
+= 4. Flashing on Arch Linux ARM =
+----
+{{{
+[root@alarmpi ~]# cd ~
+[root@alarmpi ~]# wget http://aur.archlinux.org/packages/av/avr-binutils-atmel/avr-binutils-atmel.tar.gz
+[root@alarmpi ~]# tar xvf avr-binutils-atmel.tar.gz
+[root@alarmpi ~]# cd avr-binutils-atmel
+[root@alarmpi avr-binutils-atmel]# nano PKGBUILD
+[root@alarmpi avr-binutils-atmel]# grep arch= PKGBUILD
+arch=('i686' 'x86_64' 'armv6h')
+[root@alarmpi avr-binutils-atmel]# makepkg -s -–asroot
+[root@alarmpi avr-binutils-atmel]# pacman -U avr-binutils-atmel-2.20.1-2-armv6h.pkg.tar.xz
+[root@alarmpi avr-binutils-atmel]# cd ..
+[root@alarmpi ~]# rm -R avr-binutils-atmel
+
+[root@alarmpi ~]# wget http://aur.archlinux.org/packages/av/avr-gcc-atmel/avr-gcc-atmel.tar.gz
+[root@alarmpi ~]# tar xvf avr-gcc-atmel.tar.gz
+[root@alarmpi ~]# cd avr-gcc-atmel
+[root@alarmpi avr-gcc-atmel]# nano PKGBUILD
+[root@alarmpi avr-gcc-atmel]# grep arch PKGBUILD | grep -v '#'
+arch=('i686' 'x86_64' 'armv6h')
+[root@alarmpi avr-gcc-atmel]# makepkg -s –asroot
+[root@alarmpi avr-gcc-atmel]# pacman -U avr-gcc-atmel-4.5.3-1-armv6h.pkg.tar.xz
+[root@alarmpi avr-gcc-atmel]# cd ..
+[root@alarmpi ~]# rm -R avr-gcc-atmel
+
+[root@alarmpi ~]# wget http://aur.archlinux.org/packages/av/avr-libc-atmel/avr-libc-atmel.tar.gz
+[root@alarmpi ~]# tar xvf avr-libc-atmel.tar.gz
+[root@alarmpi ~]# cd avr-libc-atmel
+[root@alarmpi avr-libc-atmel]# makepkg -s --asroot
+[root@alarmpi avr-libc-atmel]# pacman -U avr-libc-atmel-1.7.1-1-any.pkg.tar.xz
+[root@alarmpi avr-gcc-atmel]# cd ..
+[root@alarmpi ~]# rm -R avr-libc-atmel
+
+[root@alarmpi ~]# svn checkout http://raspy-juice.googlecode.com/svn/trunk/ raspy-juice-read-only
+[root@alarmpi ~]# cd raspy-juice-read-only/bootloader/razzor-twiboot-ca2a0a9/linux/
+[root@alarmpi linux]# cp twiboot /usr/local/bin/
+[root@alarmpi linux]# cd ~/raspy-juice-read-only/firmware/
+[root@alarmpi firmware]# make
+[root@alarmpi firmware]# make flashinstall
+
+}}}
