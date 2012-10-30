@@ -2,7 +2,7 @@
 
 = Introduction =
 
-Since the sources for the RTC driver is not maintained as a linux source, you will have to build the kernel yourself, using the published patch.
+The sources for the RTC driver is not maintained as a linux source, you will have to build the kernel yourself, using the published patch. Also, in order to use the RTC time at boot, the drivers (I2C and RTC) need to be compiled into the kernel, I doubt that this will ever be done in standard distributions.
 
 I got this recepie from Adnan at 2-Watt elements. I have sucessfully compiled a new kernel on an Arch i686, se below for modified instructions.
 
@@ -67,6 +67,15 @@ $ cd rpi-linux.git/
 $ patch -p1 < ../raspy-juice-read-only/linux-rtc/0001-rtc-pcf8523.patch
 $ cp arch/arm/configs/bcmrpi_defconfig .config
 $ make ARCH=arm CROSS_COMPILE=/usr/local/bin/arm-linux-gnueabihf- xconfig
+}}}
+
+Configure both I2C driver and RTC driver to be kernel (not module) drivers:
+{{{
+Symbol: I2C_BCM2708 [=y]
+Symbol: RTC_DRV_PCF8523 [=y]
+}}}
+
+{{{
 $ make ARCH=arm CROSS_COMPILE=/usr/local/bin/arm-linux-gnueabihf- INSTALL_MOD_PATH=arch/arm/boot/ zImage modules modules_install
 $ cd arch/arm/boot/
 $ sudo cp /media/hd-sdc1/kernel.img kernel-rpi.img
@@ -103,13 +112,9 @@ Setting the clock and disabling ntpd:
 
 Reboot. 
 
-Unfortunately the rtc driver is loaded after the system tries to set system time from rtc:
+Check that all log files have correct date:
 
 {{{
-# grep rtc0 /var/log/kernel.log
-Jan  1 01:00:07 alarmpi kernel: [    1.193329] drivers/rtc/hctosys.c: unable to open rtc device (rtc0)
-Jan  1 01:00:07 alarmpi kernel: [    4.661218] rtc-pcf8523 0-0068: rtc core: registered rtc-pcf8523 as rtc0
-]# date
-tor jan  1 01:24:07 CET 1970
-
+# cd /var/log
+# ls -l *
 }}}
