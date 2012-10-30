@@ -4,7 +4,7 @@
 
 Since the sources for the RTC driver is not maintained as a linux source, you will have to build the kernel yourself, using the published patch.
 
-I got this recepie from Adnan at 2-Watt elements, but I have not tried it myself yet.
+I got this recepie from Adnan at 2-Watt elements. I have sucessfully compiled a new kernel on an Arch i686, se below for modified instructions.
 
 = Details =
 
