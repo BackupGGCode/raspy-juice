@@ -67,6 +67,7 @@ $ cd rpi-linux.git/
 $ patch -p1 < ../raspy-juice-read-only/linux-rtc/0001-rtc-pcf8523.patch
 $ cp arch/arm/configs/bcmrpi_defconfig .config
 $ make ARCH=arm CROSS_COMPILE=/usr/local/bin/arm-linux-gnueabihf- xconfig
+$ make ARCH=arm CROSS_COMPILE=/usr/local/bin/arm-linux-gnueabihf- INSTALL_MOD_PATH=arch/arm/boot/ zImage modules modules_install
 $ cd arch/arm/boot/
 $ sudo cp /media/hd-sdc1/kernel.img kernel-rpi.img
 $ sudo cp zImage /media/hd-sdc1/kernel.img
