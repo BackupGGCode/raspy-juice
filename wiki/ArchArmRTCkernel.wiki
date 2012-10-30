@@ -97,7 +97,7 @@ Setting the clock and disabling ntpd:
 
 {{{
 # timedatectl set-timezone Europe/Stockholm
-# /sbin/hwclock --systohc –utc
+# /sbin/hwclock --systohc --utc
 # systemctl disable openntpd.service
 }}}
 
