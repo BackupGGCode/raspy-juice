@@ -91,9 +91,9 @@ On Raspberry after boot, check that the driver is loaded:
 {{{
 # cd /var/log
 # grep pcf8523 kernel.log
-Oct 29 12:45:47 alarmpi kernel: [    4.682463] rtc-pcf8523 0-0068: chip found, driver version 1.0
-Oct 29 12:45:47 alarmpi kernel: [    4.701464] rtc-pcf8523 0-0068: rtc core: registered rtc-pcf8523 as rtc0
-
+Oct 30 14:48:03 alarmpi kernel: [    1.187464] rtc-pcf8523 0-0068: chip found, driver version 1.0
+Oct 30 14:48:03 alarmpi kernel: [    1.189455] rtc-pcf8523 0-0068: rtc core: registered rtc-pcf8523 as rtc0
+Oct 30 14:48:03 alarmpi kernel: [    1.197542] rtc-pcf8523 0-0068: setting system clock to 2012-10-30 13:47:57 UTC (1351604877)
 }}}
 
 In order to set the timezone I had to install polkit and reboot:
