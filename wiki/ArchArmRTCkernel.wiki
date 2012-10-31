@@ -102,19 +102,19 @@ In order to set the timezone I had to install polkit and reboot:
 # pacman -S polkit
 }}}
 
-Setting the clock and disabling ntpd:
+Setting the clock:
 
 {{{
 # timedatectl set-timezone Europe/Stockholm
 # /sbin/hwclock --systohc --utc
-# systemctl disable openntpd.service
 }}}
 
 Reboot. 
 
-Check that all log files have correct date:
+Check that all log files have correct date and that system is started with correct time:
 
 {{{
 # cd /var/log
+# grep pcf8523 kernel.log
 # ls -l *
 }}}
