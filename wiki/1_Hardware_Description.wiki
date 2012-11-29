@@ -21,8 +21,9 @@ The main feature of this expansion board is to supply the RPi host computer with
   * RS485 interface to USART0 of the AVR microcontroller.
   * RS232 interface to the programmable pins of the AVR microcontroller.
   * Expansion header of unused programmable pins of the microcontroller.
-
-
+=== 2.3 Schematics and Drawings ===
+  * [http://code.google.com/p/raspy-juice/source/browse/wiki/juice-r1-wiki-dim-rpi.pdf Schematic of Raspy Juice Rev.1 Beta PCBA]
+  * [http://code.google.com/p/raspy-juice/source/browse/wiki/juice-r1-wiki-schem.pdf Mechanical overlay drawing of Raspy Juice over Raspberry Pi]
 <br>
 <br>
 = 3. Module Conections =
