@@ -25,7 +25,7 @@ The main feature of this expansion board is to supply the RPi host computer with
 
 === 2.3 Schematics and Drawings ===
   * [http://raspy-juice.googlecode.com/svn/wiki/juice-r1-wiki-schem.pdf Schematic of Raspy Juice Rev.1 Beta PCBA]
-  * [http://raspy-juice.googlecode.com/files/juice-r1-wiki-dim-rpi.pdf Mechanical overlay drawing of Raspy Juice over Raspberry Pi]
+  * [http://raspy-juice.googlecode.com/svn/wiki/juice-r1-wiki-dim-rpi.pdf Mechanical overlay drawing of Raspy Juice over Raspberry Pi]
 <br>
 <br>
 = 3. Module Conections =
