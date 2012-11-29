@@ -14,6 +14,7 @@ Raspy Juice is an experimental expansion board to supply a Raspberry Pi (*RPi*) 
 The main feature of this expansion board is to supply the RPi host computer with a regulated +5V through the GPIO header. With the wide voltage input range, the RPi can be powered from a wide variety of external sources such as batteries, 12V power adapters, solar battery sources, etc. Additional +5V power outputs are also available at the pins of the JST servo ports connectors.
   * RS232-level translated RPi console port with either 2.5mm stereo jack or JST connector.
   * RTC based on NXP PCF8523 with backup power capacitor.
+
 === 2.2 Secondary Features ===
   * Atmel ATmega168A AVR microcontroller, running at +3.3V, 14.7456MHz and as a slave I2C device to the RPi host computer.
   * Secondary +3.3 450mA high-efficiency buck regulator
@@ -21,8 +22,9 @@ The main feature of this expansion board is to supply the RPi host computer with
   * RS485 interface to USART0 of the AVR microcontroller.
   * RS232 interface to the programmable pins of the AVR microcontroller.
   * Expansion header of unused programmable pins of the microcontroller.
+
 === 2.3 Schematics and Drawings ===
-  * [http://code.google.com/p/raspy-juice/source/browse/wiki/juice-r1-wiki-dim-rpi.pdf Schematic of Raspy Juice Rev.1 Beta PCBA]
+  * [http://raspy-juice.googlecode.com/files/juice-r1-wiki-schem.pdf Schematic of Raspy Juice Rev.1 Beta PCBA]
   * [http://code.google.com/p/raspy-juice/source/browse/wiki/juice-r1-wiki-schem.pdf Mechanical overlay drawing of Raspy Juice over Raspberry Pi]
 <br>
 <br>
