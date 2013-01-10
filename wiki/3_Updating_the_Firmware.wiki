@@ -145,9 +145,30 @@ Plug in an RC servo into Servo 1 port.
 while [ 1 ] ; do /usr/sbin/i2cset -y 0 0x48 1 1000 w ; sleep 0.5 ; /usr/sbin/i2cset -y 0 0x48 1 2000 w ; sleep 0.5 ; done
 ^C
 }}}
+<br>
 
 = 4. Flashing on Arch Linux ARM =
 ----
+The sections above generally describe the process of building and updating the Raspy Juice firmware on a Raspberry Pi running in a Debian "wheezy" environment. To accomplish the above operations with a Raspberry Pi running Arch Linux ARM, the process is as follows.
+
+{{{
+sudo pacman -Syy
+sudo pacman -S base-devel subversion avr-gcc avr-binutils avr-libc i2c-tools
+
+cd
+svn checkout http://raspy-juice.googlecode.com/svn/trunk/ raspy-juice-read-only
+
+cd ~/raspy-juice-read-only/bootloader/razzor-twiboot-ca2a0a9/linux/
+make
+sudo cp twiboot /usr/local/bin
+
+cd ~/raspy-juice-read-only/firmware
+make
+make flashinstall
+}}}
+
+<br>
+Listed below is a set of instructions for building the above tools from sources. This may no longer be necessary as the Arch Linux ARM repository has the binaries added. (Thanks to Mårten Gustafsson for this contribution).
 {{{
 [root@alarmpi ~]# cd ~
 [root@alarmpi ~]# wget http://aur.archlinux.org/packages/av/avr-binutils-atmel/avr-binutils-atmel.tar.gz
