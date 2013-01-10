@@ -1,4 +1,5 @@
 #summary Building the ARCH ARM kernel for RTC driver.
+#labels Featured
 
 = Introduction =
 
