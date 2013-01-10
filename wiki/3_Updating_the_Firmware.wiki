@@ -151,6 +151,33 @@ while [ 1 ] ; do /usr/sbin/i2cset -y 0 0x48 1 1000 w ; sleep 0.5 ; /usr/sbin/i2c
 ----
 The sections above generally describe the process of building and updating the Raspy Juice firmware on a Raspberry Pi running in a Debian "wheezy" environment. To accomplish the above operations with a Raspberry Pi running Arch Linux ARM, the process is as follows.
 
+<br>
+== 4.1 Setting up the Arch Linux ARM kernel I2C bus ==
+Create or edit a file in the /etc/modules-load.d directory to load the necessary kernel modules at boot-up for the I2C bus. The file contents should at least have:
+{{{
+# Load i2c device and bus drivers 
+i2c-dev
+i2c-bcm2708
+}}}
+The below command may be used to achieve the above (cut and paste).
+{{{
+sudo sh -c 'echo -e "i2c-dev\ni2c-bcm2708\n" >> /etc/modules-load.d/i2c-load.conf'
+}}}
+<br>
+
+Create, edit or append an additional line to /etc/udev/rules.d/91-local.rules to modify the permissions of I2C devices for user access. The edited file should at least have the line:
+{{{
+SUBSYSTEM=="i2c-dev", MODE="0777", GROUP="i2c"
+}}}
+The below command may be used to achieve the above (cut and paste).
+{{{
+sudo sh -c 'echo "SUBSYSTEM==\"i2c-dev\", MODE=\"0777\"" >> /etc/udev/rules.d/91-local.rules'
+}}}
+
+The owner, group and permissions mode may be adjusted to suit the system needs. After rebooting, the I2C buses should appear in the /dev directory.
+
+<br>
+== 4.2 Install the tools to build the bootloader and update the firmware ==
 {{{
 sudo pacman -Syy
 sudo pacman -S base-devel subversion avr-gcc avr-binutils avr-libc i2c-tools
@@ -168,7 +195,8 @@ make flashinstall
 }}}
 
 <br>
-Listed below is a set of instructions for building the above tools from sources. This may no longer be necessary as the Arch Linux ARM repository has the binaries added. (Thanks to Mårten Gustafsson for this contribution).
+== 4.3 Building the AVR tools from source ==
+Listed below is a set of instructions for building the above AVR tools from sources. This may no longer be necessary as the Arch Linux ARM package repository has the binaries added. (Thanks to Mårten Gustafsson for this contribution).
 {{{
 [root@alarmpi ~]# cd ~
 [root@alarmpi ~]# wget http://aur.archlinux.org/packages/av/avr-binutils-atmel/avr-binutils-atmel.tar.gz
