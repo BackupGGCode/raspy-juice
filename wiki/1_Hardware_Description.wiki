@@ -9,6 +9,12 @@ Raspy Juice is an experimental expansion board to supply a Raspberry Pi (*RPi*) 
 
 = 2. Details =
 ----
+<br>
+=== Block Diagram ===
+<img src=http://raspy-juice.googlecode.com/svn/wiki/juice-block-640x480.png border=2 style="border:2px solid black;max-width:100%;" />
+<br>
+<br>
+
 === 2.1 Main Features ===
   * 6-23V input to 5V, 3A high-efficiency (>80%) buck regulator with input polarity protection.
 The main feature of this expansion board is to supply the RPi host computer with a regulated +5V through the GPIO header. With the wide voltage input range, the RPi can be powered from a wide variety of external sources such as batteries, 12V power adapters, solar battery sources, etc. Additional +5V power outputs are also available at the pins of the JST servo ports connectors.
@@ -29,7 +35,7 @@ The main feature of this expansion board is to supply the RPi host computer with
 <br>
 <br>
 = 3. Module Conections =
-https://raspy-juice.googlecode.com/svn/wiki/juice-r1-conndiag.png
+http://raspy-juice.googlecode.com/svn/wiki/juice-r1-conndiag.png
 
 === 3.1 RPi GPIO header ===
 See description on http://elinux.org/Rpi_Low-level_peripherals
