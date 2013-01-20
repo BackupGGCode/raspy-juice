@@ -1,4 +1,4 @@
-#summary [to be deprecated] General Hardware Description of Raspy Juice Exp Board.
+#summary [to be deprecated] General Hardware Description of Raspy Juice Exp Board. GOTO NEWER PAGE  * http://code.google.com/p/raspy-juice/wiki/1_Hardware_Description *
 #labels Deprecated
 
 = Introduction =
