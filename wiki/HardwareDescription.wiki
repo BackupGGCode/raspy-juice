@@ -3,6 +3,8 @@
 
 = Introduction =
 
+GOTO NEWER PAGE  * http://code.google.com/p/raspy-juice/wiki/1_Hardware_Description * 
+
 Raspy Juice is an experimental expansion board to supply a Raspberry Pi (*RPi*) host computer with a regulated +5V from a wide-range voltage source. The board also contains a real-time clock, an RS232-level translator for the host console serial port, and an expansion AVR ATmega168A  microcontroller (MCU). This MCU provides the service of controlling 4 channels of RC servo outputs, an RS485 interface, and a half-duplex software-based RS232 interface. In addition, the spare pins of the MCU are brought to an expansion header which may be used for other purposes. The MCU itself is interfaced to the host computer through an I2C/TWI interface, in which the former is a slave device. 
 
 = 1 Details =
