@@ -41,14 +41,10 @@
 
 char const VERSION_STR[] PROGMEM = "$Id$";
 
-#if 0
 FILE rs232_stream = FDEV_SETUP_STREAM(rs232_putchar, rs232_getchar, 
 				      _FDEV_SETUP_RW);
-#endif
 
 volatile static unsigned char twi_state = 0;
-
-unsigned char i2c_buf[20];
 
 unsigned char led_state = 1;
 long led_counter = 0, led_timing[4] = { 500000L, 40000L, 20000L, 40000L }; 
@@ -66,57 +62,12 @@ void led_heartbeat(void)
     }
 }
 
+
 #ifdef TWI_POLL_MODE
-# define TWI_debug(fmt, ...)	printf(fmt, ##__VA_ARGS__)
+# define TWI_debug(fmt, ...)	printf_P(fmt, ##__VA_ARGS__)
 #else
 # define TWI_debug(fmt, ...)
 #endif
-
-#ifdef RTC_DEBUG
-void pcf8523_reset(void)
-{
-    i2c_buf[0] = 0;
-    i2c_buf[1] = 0x58;
-    i2c_write(PCF8523_ADDR, i2c_buf, 2);
-}
-
-void pcf8523_dispregs(char *title)
-{
-    int i;
-
-    i2c_buf[0] = 0;	// set register addr to 0
-    i2c_write(PCF8523_ADDR, i2c_buf, 1);
-    i2c_read( PCF8523_ADDR, i2c_buf, 10);
-    printf("%s", title);
-    for (i = 0; i < 10; i++) {
-	printf("0x%02x ", i2c_buf[i]);
-    }
-    printf("\n");
-}
-#endif
-
-void pcf8523_set_cont_regs(void)
-{
-    unsigned char cont_1, cont_2, cont_3;
-
-    i2c_buf[0] = 0;	// set register addr to 0
-    i2c_write(PCF8523_ADDR, i2c_buf, 1);
-    i2c_read( PCF8523_ADDR, i2c_buf, 3);
-
-    /* cap_sel = 12.5pF crystal */
-    cont_1 = i2c_buf[0] | 0b10000000;
-    /* don't touch cont_2 bits */
-    cont_2 = i2c_buf[1];
-    /* Battery switchover and low-detection enabled */
-    cont_3 = i2c_buf[2] & 0xb00011111;
-    
-    /* Register address offset pointer = 0 */
-    i2c_buf[0] = 0;
-    i2c_buf[1] = cont_1;
-    i2c_buf[2] = cont_2;
-    i2c_buf[3] = cont_3;
-    i2c_write(PCF8523_ADDR, i2c_buf, 4);
-}
 
 int main(void)
 {
@@ -131,30 +82,16 @@ int main(void)
     /* Enable ADC, and set clock prescaler to div 128 */
     ADCSRA = (1<<ADEN) | (1<<ADPS2) | (1<<ADPS1) | (1<<ADPS0);
     
-    sei();
-
-#ifdef RTC_DEBUG
-    /* Test printouts */
-    stdout = stdin = &rs232_stream;
-    printf_P(PSTR("\nTest Application of RTC control bits fix.\n"));
-    printf_P(VERSION_STR);
-    printf_P(PSTR("\n"));
-#endif
-
-    /* Initialise AVR TWI as master */
-    TWBR = 1;
-    TWSR = TWSR | 1;
-
-    pcf8523_set_cont_regs();
-
-#ifdef RTC_DEBUG
-    pcf8523_dispregs("After bits mods: ");
-#endif
-
-    /* Re-initialise AVR TWI module as slave */
     TWAR = (AVRSLAVE_ADDR << 1);
     TWCR = (1<<TWINT) | (1<<TWEA) | (1<<TWEN) | (1<<TWIE);
+    
+    sei();
 
+    /* Test printouts */
+    stdout = stdin = &rs232_stream;
+    TWI_debug("\r\nTest Application of Juice Firmware\r\n");
+    TWI_debug("Second line\r\n\r\n");
+    
     while (1) {
 	led_heartbeat();
 
@@ -184,6 +121,9 @@ int main(void)
  * AppNote           : AVR311 - TWI Slave Implementation
  * Description       : Interrupt-driver sample driver to AVRs TWI module. 
  ****************************************************************************/
+
+#define DEFAULT_BPS9600_PRESCALER	0b100   // clk/64
+#define DEFAULT_BPS9600_FULLPERIOD	24	// 104us
 
 ISR(TWI_vect)
 {
