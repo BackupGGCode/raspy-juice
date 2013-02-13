@@ -40,7 +40,7 @@ HEX_EEPROM_FLAGS += --change-section-lma .eeprom=0 --no-change-warnings
 
 
 ## Objects that must be built in order to link
-OBJECTS = juice-twi.o svc-servo.o svc-rs232.o svc-rs485.o i2c-master.o
+OBJECTS = juice-twi.o svc-servo.o svc-rs232.o svc-rs485.o
 
 ## Objects explicitly added by the user
 LINKONLYOBJECTS = 
