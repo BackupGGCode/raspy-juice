@@ -2,7 +2,7 @@
 # Makefile for the loop-test.c
 ###############################################################################
 CC=gcc
-CFLAGS=-c -Wall
+CFLAGS=-c -Wall -I../c_examples
 LDFLAGS=
 
 SOURCES=loop-test.c
