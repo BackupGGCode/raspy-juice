@@ -40,8 +40,9 @@ int main(int argc, char *argv[])
 	printf("open %s: error = %d\n", devbusname, file);
 	exit(1);
     }
-    else
+    else {
 	printf("open %s: succeeded.\n", devbusname);
+    }
     
     if (ioctl(file, I2C_SLAVE, i2caddr) < 0) {
 	printf("open i2c slave 0x%02x: error = %s\n\n", i2caddr, "dunno");
