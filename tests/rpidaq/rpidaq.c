@@ -61,18 +61,6 @@ int i2cbus_open(const char *devbusname)
 	return -3;
     
     return 0;
-   
-#if 0
-    //err = i2cdev_open(fd_i2cbus, i2caddr_adc);
-    err = ioctl(fd_i2cbus, I2C_SLAVE, i2caddr_adc);
-    printf("i2cdev_open: err = %d\n", err);
-    fd_adc = err;
-    numbytes = read(fd_i2cbus, i2c_buffer, 4);
-    printf("read: numbytes read = %d, 0x%02x 0x%02x 0x%02x 0x%02x\n",
-	   numbytes, 
-	   i2c_buffer[0], i2c_buffer[1], i2c_buffer[2], i2c_buffer[3]);
-#endif
-       
 }
     
 int spi_open(const char *devbusname)
@@ -135,19 +123,6 @@ void spi_xfer(int fd, int len, uint8_t *tx, uint8_t *rx)
 {
     int ret;
     
-#if 0    
-    uint8_t tx[] = {
-	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-	0x40, 0x00, 0x00, 0x00, 0x00, 0x95,
-	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-	0xDE, 0xAD, 0xBE, 0xEF, 0xBA, 0xAD,
-	0xF0, 0x8D,
-    };
-    uint8_t rx[ARRAY_SIZE(tx)] = {0, };
-#endif
-    
     struct spi_ioc_transfer tr = {
 	.tx_buf = (unsigned long)tx,
 	.rx_buf = (unsigned long)rx,
@@ -170,6 +145,79 @@ void spi_xfer(int fd, int len, uint8_t *tx, uint8_t *rx)
 }
 
 
+int daq_xfer(int subsystem, int dout)
+{
+    spi_outbuf[0] = subsystem >> 8;
+    spi_outbuf[1] = subsystem;
+    spi_xfer(fd_spi1, 2, spi_outbuf, spi_inbuf);
+    
+    spi_outbuf[0] = dout >> 8;
+    spi_outbuf[1] = dout;
+    spi_xfer(fd_spi0, 2, spi_outbuf, spi_inbuf);
+    
+    return (spi_inbuf[1] << 8) | (spi_inbuf[0] & 0xff);
+}
+
+static int lcd_data;
+#define DAQ_SPI_LCD 1
+
+int  daq_lcd_data(int data)
+{
+#if 0
+    spi_outbuf[1] = data;
+    spi_xfer(fd_spi0, 4, spi_outbuf, spi_inbuf);
+#else
+    lcd_data = lcd_data & 0xff00;
+    lcd_data = lcd_data | (data & 0xff);
+    daq_xfer(DAQ_SPI_LCD, lcd_data);
+#endif
+    return 0;
+}
+
+void daq_lcd_regsel(int addr)
+{
+#if 0
+    int mask = 0x01;
+    spi_outbuf[0] &= ~mask;
+    if (addr) {
+	spi_outbuf[0] |= mask;
+    }
+    spi_xfer(fd_spi0, 4, spi_outbuf, spi_inbuf);
+    printf("lcd reg selected = %d\n", state);
+#else
+    lcd_data = lcd_data & (~0x0100);
+    lcd_data = lcd_data | (addr ? 0x0100 : 0);
+    daq_xfer(DAQ_SPI_LCD, lcd_data);
+#endif
+}
+
+void daq_lcd_strobe(void)
+{
+#if 0
+    int mask = 0x04;
+    /* lcd strobe E# is inverted in CPLD implementation */
+    /* assert */
+    spi_outbuf[0] |= mask;
+    spi_xfer(fd_spi0, 4, spi_outbuf, spi_inbuf);
+    usleep(50);
+    /* unassert */
+    spi_outbuf[0] &= ~mask;
+    spi_xfer(fd_spi0, 4, spi_outbuf, spi_inbuf);
+    usleep(50);
+#else
+    /* lcd strobe E# is inverted in CPLD implementation */
+    /* assert */
+    lcd_data = lcd_data & (~0x0400);
+    daq_xfer(DAQ_SPI_LCD, lcd_data);
+    usleep(50);
+
+    /* unassert */
+    lcd_data = lcd_data | (0x0400);
+    daq_xfer(DAQ_SPI_LCD, lcd_data);
+    usleep(50);
+#endif
+    printf("lcd strobed\n");
+}
 
 void daq_set_relay(int relay, int onoff)
 {
@@ -206,38 +254,6 @@ void daq_set_leds(int led_set)
 }
 
 
-int  daq_lcd_data(int data)
-{
-    spi_outbuf[1] = data;
-    spi_xfer(fd_spi0, 4, spi_outbuf, spi_inbuf);
-}
-
-void daq_lcd_regsel(int state)
-{
-    int mask = 0x01;
-    spi_outbuf[0] &= ~mask;
-    if (state) {
-	spi_outbuf[0] |= mask;
-    }
-    spi_xfer(fd_spi0, 4, spi_outbuf, spi_inbuf);
-    printf("lcd reg selected = %d\n", state);
-}
-
-void daq_lcd_strobe(void)
-{
-    int mask = 0x04;
-    /* lcd strobe E# is inverted in CPLD implementation */
-    /* assert */
-    spi_outbuf[0] |= mask;
-    spi_xfer(fd_spi0, 4, spi_outbuf, spi_inbuf);
-    usleep(50);
-    /* un-assert */
-    spi_outbuf[0] &= ~mask;
-    spi_xfer(fd_spi0, 4, spi_outbuf, spi_inbuf);
-    usleep(50);
-    printf("lcd strobed\n");
-}
-
 
 
 
@@ -246,6 +262,8 @@ int main(int argc, char *argv[])
 {
     int err, numbytes;
     unsigned char i2c_buffer[16];
+    
+    lcd_data = 0;
     
     printf("Hello, world!\n\n");
     
@@ -283,95 +301,20 @@ int main(int argc, char *argv[])
     spi_xfer(fd_spi0, 4, spi_outbuf, spi_inbuf);
     sleep(1);
 
-    daq_set_relay(0, 1);
-    sleep(2);
-
-#if 0    
-    daq_set_relay(1, 1);
-    sleep(1);
-    
-    daq_set_relay(2, 1);
-    sleep(1);
-    
-    daq_set_relay(3, 1);
-    sleep(1);
-    
-    daq_set_relay(0, 0);
-    sleep(1);
-    
-    daq_set_relay(1, 0);
-    sleep(1);
-    
-    daq_set_relay(2, 0);
-    sleep(1);
-    
-    daq_set_relay(3, 0);
-    sleep(1);
-    
-    daq_set_led(0, 1);
-    sleep(1);
-    
-    daq_set_led(1, 1);
-    sleep(1);
-    
-    daq_set_led(2, 1);
-    sleep(1);
-    
-    daq_set_led(0, 0);
-    sleep(1);
-    
-    daq_set_led(1, 0);
-    sleep(1);
-    
-    daq_set_led(2, 0);
-    sleep(1);
-#endif
-    
-#if 1
+    /* LCD init */
     daq_lcd_data(0x00);
     daq_lcd_regsel(0);
     
+    /* switch on relay 0 */
+    daq_set_relay(0, 1);
+    sleep(2);
+
+#if 1
     printf("Going into lcd_main()\n");
     lcd_main ();
     printf("Got out of lcd_main()\n");
 #endif
     
-#if 0
-    spi_outbuf[0] = 0xff;
-    spi_outbuf[1] = 0xff;
-    spi_outbuf[2] = 0xff;
-    spi_outbuf[3] = 0x20;
-    spi_xfer(fd_spi0, 4, spi_outbuf, spi_inbuf);
-    sleep(1);
-    
-    spi_outbuf[0] = 0xff;
-    spi_outbuf[1] = 0xff;
-    spi_outbuf[2] = 0xff;
-    spi_outbuf[3] = 0x21;
-    spi_xfer(fd_spi0, 4, spi_outbuf, spi_inbuf);
-    sleep(1);
-    
-    spi_outbuf[0] = 0xff;
-    spi_outbuf[1] = 0xff;
-    spi_outbuf[2] = 0xff;
-    spi_outbuf[3] = 0x23;
-    spi_xfer(fd_spi0, 4, spi_outbuf, spi_inbuf);
-    sleep(1);
-
-    spi_outbuf[0] = 0xff;
-    spi_outbuf[1] = 0xff;
-    spi_outbuf[2] = 0xff;
-    spi_outbuf[3] = 0x27;
-    spi_xfer(fd_spi0, 4, spi_outbuf, spi_inbuf);
-    sleep(1);
-    
-    spi_outbuf[0] = 0xff;
-    spi_outbuf[1] = 0xff;
-    spi_outbuf[2] = 0xff;
-    spi_outbuf[3] = 0x2f;
-    spi_xfer(fd_spi0, 4, spi_outbuf, spi_inbuf);
-    sleep(1);
-#endif
 //    spi_outbuf[0] = 0x0;
 //    spi_outbuf[1] = 0x0;
     spi_outbuf[2] = 0x0;
