@@ -98,10 +98,10 @@ int lcd_main (void)
   lcdPosition (fd1, 0, 2) ; lcdPuts (fd1, "   00:00:00") ;
   lcdPosition (fd1, 0, 3) ; lcdPuts (fd1, "   DD:MM:YY") ;
 */
-
+/*
   lcdPosition (fd2, 0, 0) ; lcdPuts (fd2, "Dave Appleton") ;
   lcdPosition (fd2, 0, 1) ; lcdPuts (fd2, "-------------") ;
-
+*/
   sleep (2) ;
 
   sprintf (message1, "%s", "                  The interface works                    ") ;
