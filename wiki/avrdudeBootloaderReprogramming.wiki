@@ -1,0 +1,30 @@
+#summary (Draft) Usage of avrdude to reprogram the bootloader firmware.
+= Introduction (DRAFT) =
+This page describes the re-programming of the bootloader firmware into the AVR ATmega168 microcontroller using AVR Serial ISP (In-System Programming) technique with the Raspberry Pi GPIO pins.
+
+= 2.0 Details (DRAFT) =
+== 2.1 Summary of quick searches of Raspberry Pi AVR Serial Programming ==
+
+  * http://www.raspberrypi.org/phpBB3/viewtopic.php?f=42&t=22650
+  * http://blog.stevemarple.co.uk/2012/07/avrarduino-isp-programmer-using.html
+  * http://blog.stevemarple.co.uk/2013/03/how-to-use-gpio-version-of-avrdude-on.html
+  * http://www.repyoblog.com/index.php/2012/10/raspberry-pi-with-avr-328p-using-spi-and-gpio/
+  * http://linux.die.net/man/1/avrdude
+  * http://www.nongnu.org/avrdude/
+  * http://www.engbedded.com/fusecalc/
+  * https://projects.drogon.net/raspberry-pi/gertboard/arduino-ide-installation-isp/
+  * https://aur.archlinux.org/packages/avrdude-svn/
+
+
+
+=== 2.x.x Basic command line instructions to flash the AVR ===
+
+[Fixme: explain Fuse settings, esp bootrst & bootsz]<br>
+[Fixme: EEPROM programming]
+{{{
+# avrdude -c linuxgpio -p m168
+# avrdude -c linuxgpio -p m168 -U lfuse:w:0xE6:m
+# avrdude -c linuxgpio -p m168 -U hfuse:w:0xD7:m
+# avrdude -c linuxgpio -p m168 -U efuse:w:0x02:m
+# avrdude -c linuxgpio -p m168 -U flash:w:twiboot-win.hex
+}}}
