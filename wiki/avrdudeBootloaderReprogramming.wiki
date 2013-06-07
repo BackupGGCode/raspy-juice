@@ -15,7 +15,10 @@ This page describes the re-programming of the bootloader firmware into the AVR A
   * https://projects.drogon.net/raspberry-pi/gertboard/arduino-ide-installation-isp/
   * https://aur.archlinux.org/packages/avrdude-svn/
 
-
+=== 2.x.x Installing, Pros and Cons ===
+  * Debian apt-get: Version 5.10 -- no linuxgpio support.
+  * Debian patched: Version 5.10 -- from https://projects.drogon.net/raspberry-pi/gertboard/arduino-ide-installation-isp/ -- inverted Reset pin setting. Try not to use pins of Raspberry Pi SPI because after avrdude usage, it will crap out the spi_bcm2708 module (and have to rmmod & modprobe again). Only works root mode, can set class-gpio pins to non-root permissions, but will revert to root ownership after avrdude usage.
+  * ArchLinuxARM pacman: Verson 5.11 -- distributed version has no linuxgpio support. Looks like have to pkgbuild from https://aur.archlinux.org/packages/avrdude-svn/
 
 === 2.x.x Basic command line instructions to flash the AVR ===
 
