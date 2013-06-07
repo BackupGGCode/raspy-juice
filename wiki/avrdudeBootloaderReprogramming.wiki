@@ -26,8 +26,17 @@ This page describes the re-programming of the bootloader firmware into the AVR A
 [Fixme: EEPROM programming]
 {{{
 # avrdude -c linuxgpio -p m168
+
 # avrdude -c linuxgpio -p m168 -U lfuse:w:0xE6:m
+
 # avrdude -c linuxgpio -p m168 -U hfuse:w:0xD7:m
+
 # avrdude -c linuxgpio -p m168 -U efuse:w:0x02:m
+
 # avrdude -c linuxgpio -p m168 -U flash:w:twiboot-win.hex
+
+# avrdude -c linuxgpio -p m168 -U eeprom:r:eep.raw:r
+
+# # modify eep.raw file into updated eep-new.raw, then write back
+# avrdude -c linuxgpio -p m168 -U eeprom:w:eep-new.raw:r
 }}}
