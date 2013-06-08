@@ -30,18 +30,18 @@ static uint16_t delay;
 int spi_open(const char *devbusname);
 void spi_xfer(int fd, int len, uint8_t *tx, uint8_t *rx);
 
-#define DAQ_SPISUB_CFG 0
-#define DAQ_SPISUB_LCD 1
-#define DAQ_SPISUB_AVR 2
+#define DAQ_SPISUB_CFG 1
+#define DAQ_SPISUB_LCD 2
 
 static int cfg_data;
 static int lcd_data;
 
-void daq_set_relay(int relay, int onoff);
-void daq_set_led(int led, int onoff);
-int  daq_lcd_data(int data);
-void daq_lcd_strobe(void);
-void daq_lcd_regsel(int state);
+#define CFG_MASK_RELAY 0x000f
+#define CFG_MASK_LEDS  0x00f0
+#define CFG_MASK_I2C_B 0x0100
+#define CFG_MASK_SPI_B 0x0200
+#define CFG_MASK_AVRST 0x0400
+
 
 int lcd_main (void);
 
@@ -228,6 +228,44 @@ void daq_set_led(int led, int onoff)
     daq_xfer(DAQ_SPISUB_CFG, cfg_data);    
 }
 
+void daq_set_buffered_i2c(int onoff)
+{
+    int mask;
+    mask = CFG_MASK_I2C_B;
+    if (onoff) {
+	cfg_data |= mask;
+    }
+    else {
+	cfg_data &= ~mask;
+    }
+    daq_xfer(DAQ_SPISUB_CFG, cfg_data);
+}
+
+void daq_set_buffered_spi(int onoff)
+{
+    int mask;
+    mask = CFG_MASK_SPI_B;
+    if (onoff) {
+	cfg_data |= mask;
+    }
+    else {
+	cfg_data &= ~mask;
+    }
+    daq_xfer(DAQ_SPISUB_CFG, cfg_data);
+}
+
+void daq_set_avr_reset(int onoff)
+{
+    int mask;
+    mask = CFG_MASK_AVRST;
+    if (onoff) {
+	cfg_data |= mask;
+    }
+    else {
+	cfg_data &= ~mask;
+    }
+    daq_xfer(DAQ_SPISUB_CFG, cfg_data);
+}
 
 
 
@@ -272,6 +310,9 @@ int main(int argc, char *argv[])
     /* UI-header and LCD init */
     daq_lcd_data(0x00);
     daq_lcd_regsel(0);
+    daq_set_avr_reset(0);
+    daq_set_buffered_spi(0);
+    daq_set_buffered_i2c(0);
     
     for (i = 0; i < 4; i++) {
 	daq_set_led(i, 0);
@@ -286,30 +327,33 @@ int main(int argc, char *argv[])
     /* switch on relay 0 */
     daq_set_relay(0, 1);
     sleep(2);
+    daq_set_buffered_i2c(1);
 
-    if (desired == 1) {
-	printf("state = 1, setting and leaving AVR interface on\n");
-	daq_xfer(DAQ_SPISUB_AVR, 0);    
-	exit(0);
-    }
-    
-    
-    
 #if 1
 //    printf("Going into lcd_main()\n");
     lcd_main ();
     printf("Got out of lcd_main()\n");
 #endif
 
+    if (desired == 1) {
+	printf("state = 1, setting and leaving buffered SPI-AVR interface on\n");
+	daq_set_buffered_spi(1);
+	daq_set_avr_reset(1);
+	daq_xfer(3, cfg_data);
+	exit(0);
+    }
+    
 
     /* turn off everything */
     daq_lcd_data(0x00);
     daq_lcd_regsel(0);
-    
     for (i = 0; i < 4; i++) {
 	daq_set_led(i, 0);
 	daq_set_relay(i, 0);
     }
+    daq_set_avr_reset(0);
+    daq_set_buffered_spi(0);
+    daq_set_buffered_i2c(0);
     
     return 0;
 }
