@@ -7,7 +7,7 @@ LDFLAGS=
 
 TARGET=jj
 
-SOURCES=rpidaq.c lcd.c lib-lcd.c
+SOURCES=rpidaq.c lib-lcd.c
 OBJECTS=$(SOURCES:.c=.o)
 
 all: $(SOURCES) $(TARGET)

@@ -42,8 +42,14 @@ static int lcd_data;
 #define CFG_MASK_SPI_B 0x0200
 #define CFG_MASK_AVRST 0x0400
 
-
-int lcd_main (void);
+int  lcd_init(int rows, int cols, int bits);
+void lcd_home(void);
+void lcd_clear(void);
+void lcdSendCommand(uint8_t command);
+void lcd_pos(int row, int col);
+void lcd_putchar(uint8_t data);
+void lcd_puts(char *string);
+void lcd_printf(char *message, ...);
 
 int i2cbus_open(const char *devbusname)
 {
@@ -272,7 +278,7 @@ void daq_set_avr_reset(int onoff)
 
 int main(int argc, char *argv[])
 {
-    int err, numbytes, i, desired;
+    int err, numbytes, i, desired, fd1;
     unsigned char i2c_buffer[16];
     
     printf("Hello, world!\n\n");
@@ -330,8 +336,13 @@ int main(int argc, char *argv[])
     daq_set_buffered_i2c(1);
 
 #if 1
-//    printf("Going into lcd_main()\n");
-    lcd_main ();
+    lcd_init(2, 20, 4);
+    printf("Got out of lcdInit()\n");
+    sleep(1);
+    lcd_pos(0, 0);
+    lcd_puts("Dave Appleton") ;
+    lcd_pos(1, 0);
+    lcd_puts("-------------") ;
     printf("Got out of lcd_main()\n");
 #endif
 
