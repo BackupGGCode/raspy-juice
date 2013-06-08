@@ -1,44 +1,9 @@
-/*
- * lcd.c:
- *	Text-based LCD driver.
- *	This is designed to drive the parallel interface LCD drivers
- *	based in the Hitachi HD44780U controller and compatables.
- *
- * Copyright (c) 2012 Gordon Henderson.
- ***********************************************************************
- * This file is part of wiringPi:
- *	https://projects.drogon.net/raspberry-pi/wiringpi/
- *
- *    wiringPi is free software: you can redistribute it and/or modify
- *    it under the terms of the GNU Lesser General Public License as published by
- *    the Free Software Foundation, either version 3 of the License, or
- *    (at your option) any later version.
- *
- *    wiringPi is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU Lesser General Public License for more details.
- *
- *    You should have received a copy of the GNU Lesser General Public License
- *    along with wiringPi.  If not, see <http://www.gnu.org/licenses/>.
- ***********************************************************************
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdarg.h>
 
-//#include "wiringPi.h"
-#include "lcd.h"
-
-int  daq_lcd_data(int data);
-void daq_lcd_strobe(void);
-void daq_lcd_regsel(int state);
-#define delay(A) usleep(1000UL * (A))
-
-// Commands
-
+// Command #defines from wiringPi
 #define	LCD_CLEAR	0x01
 #define	LCD_HOME	0x02
 #define	LCD_ENTRY	0x04
@@ -47,372 +12,220 @@ void daq_lcd_regsel(int state);
 #define	LCD_FUNC	0x20
 #define	LCD_CGRAM	0x40
 #define	LCD_DGRAM	0x80
-
 #define	LCD_ENTRY_SH	0x01
 #define	LCD_ENTRY_ID	0x02
-
 #define	LCD_ON_OFF_B	0x01
 #define	LCD_ON_OFF_C	0x02
 #define	LCD_ON_OFF_D	0x04
-
 #define	LCD_FUNC_F	0x04
 #define	LCD_FUNC_N	0x08
 #define	LCD_FUNC_DL	0x10
-
 #define	LCD_CDSHIFT_RL	0x04
 
-struct lcdDataStruct
-{
-  uint8_t bits, rows, cols ;
-  uint8_t rsPin, strbPin ;
-  uint8_t dataPins [8] ;
-} ;
+// command #defines from Arduino LiquidCrystal.c
+#define LCD_CLEARDISPLAY	0x01
+#define LCD_RETURNHOME		0x02
+#define LCD_ENTRYMODESET	0x04
+#define LCD_DISPLAYCONTROL	0x08
+#define LCD_CURSORSHIFT		0x10
+#define LCD_FUNCTIONSET		0x20
+#define LCD_SETCGRAMADDR	0x40
+#define LCD_SETDDRAMADDR	0x80
+// flags for display entry mode
+#define LCD_ENTRYRIGHT		0x00
+#define LCD_ENTRYLEFT		0x02
+#define LCD_ENTRYSHIFTINCREMENT	0x01
+#define LCD_ENTRYSHIFTDECREMENT	0x00
+// flags for display on/off control
+#define LCD_DISPLAYON		0x04
+#define LCD_DISPLAYOFF		0x00
+#define LCD_CURSORON		0x02
+#define LCD_CURSOROFF		0x00
+#define LCD_BLINKON		0x01
+#define LCD_BLINKOFF		0x00
+// flags for display/cursor shift
+#define LCD_DISPLAYMOVE		0x08
+#define LCD_CURSORMOVE		0x00
+#define LCD_MOVERIGHT		0x04
+#define LCD_MOVELEFT		0x00
+// flags for function set
+#define LCD_8BITMODE		0x10
+#define LCD_4BITMODE		0x00
+#define LCD_2LINE		0x08
+#define LCD_1LINE		0x00
+#define LCD_5x10DOTS		0x04
+#define LCD_5x8DOTS		0x00
 
-struct lcdDataStruct *lcds [MAX_LCDS] ;
-
-
-/*
- * strobe:
- *	Toggle the strobe (Really the "E") pin to the device.
- *	According to the docs, data is latched on the falling edge.
- *********************************************************************************
- */
-
-static void strobe (struct lcdDataStruct *lcd)
-{
-
-// Note timing changes for new version of delayMicroseconds ()
 #if 0
-  digitalWrite (lcd->strbPin, 1) ; delayMicroseconds (50) ;
-  digitalWrite (lcd->strbPin, 0) ; delayMicroseconds (50) ;
-#else
+/* methods from Arduino's LiquidCrystal.h */
+void init(uint8_t fourbitmode, uint8_t rs, uint8_t rw, uint8_t enable,
+	  uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3,
+	    uint8_t d4, uint8_t d5, uint8_t d6, uint8_t d7);
+void begin(uint8_t cols, uint8_t rows, uint8_t charsize = LCD_5x8DOTS);
+void clear();
+void home();
+void noDisplay();
+void display();
+void noBlink();
+void blink();
+void noCursor();
+void cursor();
+void scrollDisplayLeft();
+void scrollDisplayRight();
+void leftToRight();
+void rightToLeft();
+void autoscroll();
+void noAutoscroll();
+void createChar(uint8_t, uint8_t[]);
+void setCursor(uint8_t, uint8_t); 
+virtual void write(uint8_t);
+void command(uint8_t);
+private:
+void send(uint8_t, uint8_t);
+void write4bits(uint8_t);
+void write8bits(uint8_t);
+void pulseEnable();
+#endif
+
+#if 0
+extern void lcd_init(uint8_t dispAttr);
+extern void lcd_home(void);
+extern void lcd_gotoxy(uint8_t x, uint8_t y);
+extern uint8_t lcd_getxy(void);
+extern void lcd_putc(char c);
+extern void lcd_puts(const char *s);
+extern void lcd_command(uint8_t cmd);
+extern void lcd_scrollup(void);
+#endif
+
+int  daq_lcd_data(int data);
+void daq_lcd_strobe(void);
+void daq_lcd_regsel(int state);
+#define delay(A) usleep(1000UL * (A))
+
+/* LCD device private data */
+static uint8_t bits, rows, cols;
+
+static void strobe(void)
+{
     daq_lcd_strobe();
-#endif
 }
 
 
-/*
- * sentDataCmd:
- *	Send an data or command byte to the display.
- *********************************************************************************
- */
-
-static void sendDataCmd (struct lcdDataStruct *lcd, uint8_t data)
+static void send_lcddata(uint8_t data)
 {
-    uint8_t i, d4 ;
-    
-    if (lcd->bits == 4)
-    {
- 
-#if 0 //aj
-	d4 = (data >> 4) & 0x0F;
-	for (i = 0 ; i < 4 ; ++i)
-	{
-	    digitalWrite (lcd->dataPins [i], (d4 & 1)) ;
-	    d4 >>= 1 ;
-	}
-	strobe (lcd) ;
-	
-	d4 = data & 0x0F ;
-	for (i = 0 ; i < 4 ; ++i)
-	{
-	    digitalWrite (lcd->dataPins [i], (d4 & 1)) ;
-	    d4 >>= 1 ;
-	}
-#else
+    if (bits == 4) {
 	daq_lcd_data(data);
-	strobe(lcd);
+	strobe();
 	daq_lcd_data(data << 4);
-#endif
-	
     }
-    else
-    {
-#if 0	
-	for (i = 0 ; i < 8 ; ++i)
-	{
-	    digitalWrite (lcd->dataPins [i], (data & 1)) ;
-	    data >>= 1 ;
-	}
-#else
+    else {
 	daq_lcd_data(data);
-#endif
-	
     }
-    
-    
-
-    strobe (lcd) ;
+    strobe() ;
 }
 
 
-/*
- * putCommand:
- *	Send a command byte to the display
- *********************************************************************************
- */
-
-static void putCommand (struct lcdDataStruct *lcd, uint8_t command)
+static void send_command(uint8_t command)
 {
-#if 0
-    digitalWrite (lcd->rsPin,   0) ;
-#else
     daq_lcd_regsel(0);
-#endif
-    sendDataCmd  (lcd, command) ;
+    send_lcddata(command);
 }
 
-static void put4Command (struct lcdDataStruct *lcd, uint8_t command)
+static void send_cmd4bit(uint8_t command)
 {
-  uint8_t i ;
-
-#if 0
-    digitalWrite (lcd->rsPin,   0) ;
-    for (i = 0 ; i < 4 ; ++i)
-    {
-	digitalWrite (lcd->dataPins [i], (command & 1)) ;
-	command >>= 1 ;
-    }
-    strobe (lcd) ;
-#else
     daq_lcd_regsel(0);
     daq_lcd_data(command << 4);
     daq_lcd_strobe();
-#endif
-
 }
 
 
-/*
- *********************************************************************************
- * User Code below here
- *********************************************************************************
- */
-
-/*
- * lcdHome: lcdClear:
- *	Home the cursor or clear the screen.
- *********************************************************************************
- */
-
-void lcdHome (int fd)
+void lcd_home(void)
 {
-  struct lcdDataStruct *lcd = lcds [fd] ;
-  putCommand (lcd, LCD_HOME) ;
-}
-
-void lcdClear (int fd)
-{
-  struct lcdDataStruct *lcd = lcds [fd] ;
-  putCommand (lcd, LCD_CLEAR) ;
+    send_command(LCD_HOME);
 }
 
 
-/*
- * lcdSendCommand:
- *	Send any arbitary command to the display
- *********************************************************************************
- */
-
-void lcdSendCommand (int fd, uint8_t command)
+void lcd_clear(void)
 {
-  struct lcdDataStruct *lcd = lcds [fd] ;
-  putCommand (lcd, command) ;
-}
-
-/*
- * lcdPosition:
- *	Update the position of the cursor on the display
- *********************************************************************************
- */
-
-
-void lcdPosition (int fd, int x, int y)
-{
-  static uint8_t rowOff [4] = { 0x00, 0x40, 0x14, 0x54 } ;
-  struct lcdDataStruct *lcd = lcds [fd] ;
-
-  putCommand (lcd, x + (LCD_DGRAM | rowOff [y])) ;
+    send_command(LCD_CLEAR);
 }
 
 
-/*
- * lcdPutchar:
- *	Send a data byte to be displayed on the display
- *********************************************************************************
- */
-
-void lcdPutchar (int fd, uint8_t data)
+void lcd_pos(int row, int col)
 {
-  struct lcdDataStruct *lcd = lcds [fd] ;
-#if 0
-  digitalWrite (lcd->rsPin, 1) ;
-#else
+    static uint8_t rowOff [4] = { 0x00, 0x40, 0x14, 0x54 };
+    send_command(col + (LCD_DGRAM | rowOff [row]));
+}
+
+
+void lcd_putchar(uint8_t data)
+{
     daq_lcd_regsel(1);
-#endif
-  sendDataCmd (lcd, data) ;
+    send_lcddata(data);
 }
 
 
-/*
- * lcdPuts:
- *	Send a string to be displayed on the display
- *********************************************************************************
- */
-
-void lcdPuts (int fd, char *string)
+void lcd_puts(char *string)
 {
-  while (*string)
-    lcdPutchar (fd, *string++) ;
+    while (*string)
+	lcd_putchar(*string++);
 }
 
 
-/*
- * lcdPrintf:
- *	Printf to an LCD display
- *********************************************************************************
- */
-
-void lcdPrintf (int fd, char *message, ...)
+void lcd_printf(char *message, ...)
 {
-  va_list argp ;
-  char buffer [1024] ;
+    va_list argp;
+    char buffer [1024];
 
-  va_start (argp, message) ;
-    vsnprintf (buffer, 1023, message, argp) ;
-  va_end (argp) ;
-
-  lcdPuts (fd, buffer) ;
+    va_start (argp, message);
+    vsnprintf (buffer, 1023, message, argp);
+    va_end (argp);
+    
+    lcd_puts(buffer);
 }
 
 
-/*
- * lcdInit:
- *	Take a lot of parameters and initialise the LCD, and return a handle to
- *	that LCD, or -1 if any error.
- *********************************************************************************
- */
-
-int lcdInit (int rows, int cols, int bits, int rs, int strb,
-	int d0, int d1, int d2, int d3, int d4, int d5, int d6, int d7)
+int lcd_init(int rows_v, int cols_v, int bits_v)
 {
-  static int initialised = 0 ;
+    uint8_t func;
+    
+    if (! ((bits_v == 4) || (bits_v == 8)))
+	return -1 ;
+    if ((rows_v < 0) || (rows_v > 20))
+	return -1 ;
+    if ((cols_v < 0) || (cols_v > 20))
+	return -1 ;
+    
+    bits = 8;
+    rows = rows_v;
+    cols = cols_v;
 
-  uint8_t func ;
-  int i ;
-  int lcdFd = -1 ;
-  struct lcdDataStruct *lcd ;
-
-  if (initialised == 0)
-  {
-    initialised = 1 ;
-    for (i = 0 ; i < MAX_LCDS ; ++i)
-      lcds [i] = NULL ;
-  }
-
-// Simple sanity checks
-
-  if (! ((bits == 4) || (bits == 8)))
-    return -1 ;
-
-  if ((rows < 0) || (rows > 20))
-    return -1 ;
-
-  if ((cols < 0) || (cols > 20))
-    return -1 ;
-
-// Create a new LCD:
-
-  for (i = 0 ; i < MAX_LCDS ; ++i)
-  {
-    if (lcds [i] == NULL)
-    {
-      lcdFd = i ;
-      break ;
+    if (bits_v == 4) {
+	func = LCD_FUNC | LCD_FUNC_DL;
+	send_cmd4bit(func >> 4);
+	send_cmd4bit(func >> 4);
+	send_cmd4bit(func >> 4);
+	func = LCD_FUNC ;
+	send_cmd4bit(func >> 4);
+	bits = 4 ;
     }
-  }
-
-  if (lcdFd == -1)
-    return -1 ;
-
-  lcd = malloc (sizeof (struct lcdDataStruct)) ;
-  if (lcd == NULL)
-    return -1 ;
-
-  lcd->rsPin   = rs ;
-  lcd->strbPin = strb ;
-  lcd->bits    = 8 ;		// For now - we'll set it properly later.
-  lcd->rows    = rows ;
-  lcd->cols    = cols ;
-
-  lcd->dataPins [0] = d0 ;
-  lcd->dataPins [1] = d1 ;
-  lcd->dataPins [2] = d2 ;
-  lcd->dataPins [3] = d3 ;
-  lcd->dataPins [4] = d4 ;
-  lcd->dataPins [5] = d5 ;
-  lcd->dataPins [6] = d6 ;
-  lcd->dataPins [7] = d7 ;
-
-  lcds [lcdFd] = lcd ;
-
-#if 0 //aj
-  digitalWrite (lcd->rsPin,   0) ; pinMode (lcd->rsPin,   OUTPUT) ;
-  digitalWrite (lcd->strbPin, 0) ; pinMode (lcd->strbPin, OUTPUT) ;
-
-  for (i = 0 ; i < bits ; ++i)
-  {
-    digitalWrite (lcd->dataPins [i], 0) ;
-    pinMode      (lcd->dataPins [i], OUTPUT) ;
-  }
-  delay (35) ; // mS
-#endif
-
-// 4-bit mode?
-//	OK. This is a PIG and it's not at all obvious from the documentation I had,
-//	so I guess some others have worked through either with better documentation
-//	or more trial and error... Anyway here goes:
-//
-//	It seems that the controller needs to see the FUNC command at least 3 times
-//	consecutively - in 8-bit mode. If you're only using 8-bit mode, then it appears
-//	that you can get away with one func-set, however I'd not rely on it...
-//
-//	So to set 4-bit mode, you need to send the commands one nibble at a time,
-//	the same three times, but send the command to set it into 8-bit mode those
-//	three times, then send a final 4th command to set it into 4-bit mode, and only
-//	then can you flip the switch for the rest of the library to work in 4-bit
-//	mode which sends the commands as 2 x 4-bit values.
-
-  if (bits == 4)
-  {
-    func = LCD_FUNC | LCD_FUNC_DL ;			// Set 8-bit mode 3 times
-    put4Command (lcd, func >> 4) ; delay (35) ;
-    put4Command (lcd, func >> 4) ; delay (35) ;
-    put4Command (lcd, func >> 4) ; delay (35) ;
-    func = LCD_FUNC ;					// 4th set: 4-bit mode
-    put4Command (lcd, func >> 4) ; delay (35) ;
-    lcd->bits = 4 ;
-  }
-  else
-  {
-    func = LCD_FUNC | LCD_FUNC_DL ;
-    putCommand  (lcd, func     ) ; delay (35) ;
-    putCommand  (lcd, func     ) ; delay (35) ;
-    putCommand  (lcd, func     ) ; delay (35) ;
-  }
-
-  if (lcd->rows > 1)
-  {
-    func |= LCD_FUNC_N ;
-    putCommand (lcd, func) ; delay (35) ;
-  }
-
-// Rest of the initialisation sequence
-
-  putCommand (lcd, LCD_ON_OFF  | LCD_ON_OFF_D) ;   delay (2) ;
-  putCommand (lcd, LCD_ENTRY   | LCD_ENTRY_ID) ;   delay (2) ;
-  putCommand (lcd, LCD_CDSHIFT | LCD_CDSHIFT_RL) ; delay (2) ;
-  putCommand (lcd, LCD_CLEAR) ;                    delay (5) ;
-
-  return lcdFd ;
+    else {
+	func = LCD_FUNC | LCD_FUNC_DL;
+	send_command(func     );
+	send_command(func     );
+	send_command(func     );
+    }
+    
+    if (rows > 1) {
+	func |= LCD_FUNC_N ;
+	send_command(func);
+    }
+    
+    send_command(LCD_ON_OFF  | LCD_ON_OFF_D);
+    send_command(LCD_ENTRY   | LCD_ENTRY_ID);
+    send_command(LCD_CDSHIFT | LCD_CDSHIFT_RL);
+    send_command(LCD_CLEAR);
+    
+    return 0;
 }
