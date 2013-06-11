@@ -5,7 +5,7 @@
 
 #define CODE_PRODUCT	"RJ2B"
 
-#define COUNTERFILE	"serial.txt"
+#define COUNTERFILE	"sernum.txt"
 #define LOGFILENAME	"jlog.txt"
 
 #define CMD_AVRDUDE	"/usr/local/bin/avrdude -c linuxgpio -p m168 "
@@ -34,6 +34,7 @@
 #define CMD_TWIBOOT 	"/usr/local/bin/twiboot -d /dev/i2c-1 -a 0x29 -p 0 -w flash:juice.hex "
 
 
+int test_avr232_comms(int randrun);
 char bigbuf[16384];
 
 int do_command(char *command, char *reply, int size)
@@ -222,7 +223,8 @@ int main(int argc, char *argv[])
 	else 
 	    printf("get_avr_serial: successful %s\n", serial_mem);
 	
-	/* Should get & put a new serial number only if readback fail */
+#if 1
+	/* Should get & put a new serial number only if needed */
 	r = get_new_serial(COUNTERFILE, serial_mem);
 	if (r < 0)
 	    printf("get_new_serial: failed\n");
@@ -245,15 +247,17 @@ int main(int argc, char *argv[])
 	else
 	    printf("put_avr_fuses: successful\n");
 	
-#if 1
 	if (put_avr_firmware(NULL) < 0)
 	    printf("put_avr_firmware: failed\n");
 	else
 	    printf("put_avr_firmware: successful\n");
-#endif	
-	
-
+#endif
 	sleep(2);
+
+	test_avr232_comms(1);
+
+
+	
     }
     
     printf("Test ended.\n");    
