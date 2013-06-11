@@ -32,6 +32,7 @@ void spi_xfer(int fd, int len, uint8_t *tx, uint8_t *rx);
 
 #define DAQ_SPISUB_CFG 1
 #define DAQ_SPISUB_LCD 2
+#define DAQ_SPISUB_COM 3
 
 static int cfg_data;
 static int lcd_data;
@@ -39,8 +40,7 @@ static int lcd_data;
 #define CFG_MASK_RELAY 0x000f
 #define CFG_MASK_LEDS  0x00f0
 #define CFG_MASK_I2C_B 0x0100
-#define CFG_MASK_SPI_B 0x0200
-#define CFG_MASK_AVRST 0x0400
+#define CFG_MASK_AVREN 0x0200
 
 int  lcd_init(int rows, int cols, int bits);
 void lcd_home(void);
@@ -247,10 +247,10 @@ void daq_set_buffered_i2c(int onoff)
     daq_xfer(DAQ_SPISUB_CFG, cfg_data);
 }
 
-void daq_set_buffered_spi(int onoff)
+void daq_set_buffered_avr(int onoff)
 {
     int mask;
-    mask = CFG_MASK_SPI_B;
+    mask = CFG_MASK_AVREN;
     if (onoff) {
 	cfg_data |= mask;
     }
@@ -260,21 +260,11 @@ void daq_set_buffered_spi(int onoff)
     daq_xfer(DAQ_SPISUB_CFG, cfg_data);
 }
 
-void daq_set_avr_reset(int onoff)
+void daq_set_comcfg(int setting)
 {
-    int mask;
-    mask = CFG_MASK_AVRST;
-    if (onoff) {
-	cfg_data |= mask;
-    }
-    else {
-	cfg_data &= ~mask;
-    }
-    daq_xfer(DAQ_SPISUB_CFG, cfg_data);
+    
+    daq_xfer(DAQ_SPISUB_COM, setting);
 }
-
-
-
 
 int main(int argc, char *argv[])
 {
@@ -316,9 +306,9 @@ int main(int argc, char *argv[])
     /* UI-header and LCD init */
     daq_lcd_data(0x00);
     daq_lcd_regsel(0);
-    daq_set_avr_reset(0);
-    daq_set_buffered_spi(0);
+    daq_set_buffered_avr(0);
     daq_set_buffered_i2c(0);
+    daq_set_comcfg(0x22);
     
     for (i = 0; i < 4; i++) {
 	daq_set_led(i, 0);
@@ -347,10 +337,12 @@ int main(int argc, char *argv[])
 #endif
 
     if (desired == 1) {
-	printf("state = 1, setting and leaving buffered SPI-AVR interface on\n");
-	daq_set_buffered_spi(1);
-	daq_set_avr_reset(1);
-	daq_xfer(3, cfg_data);
+	printf("state = 1, setting and leaving buffered AVR interface on\n");
+	daq_set_buffered_avr(1);
+	/* leaving com port selection as RPICOM <-> AVR232 */
+	daq_set_comcfg(0x22);
+	/* Hmmm, what does this do? */
+	//daq_xfer(3, cfg_data);
 	exit(0);
     }
     
@@ -362,8 +354,7 @@ int main(int argc, char *argv[])
 	daq_set_led(i, 0);
 	daq_set_relay(i, 0);
     }
-    daq_set_avr_reset(0);
-    daq_set_buffered_spi(0);
+    daq_set_buffered_avr(0);
     daq_set_buffered_i2c(0);
     
     return 0;
