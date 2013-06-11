@@ -30,9 +30,13 @@
 #define LINEBUFSZ	256
 #define FMT_FULLDATE	"[%Y-%m-%d %H:%M:%S %Z]"
 
+#define CMD_AVR_I2CRST 	"/usr/bin/i2cset -y 1  0x48 0xb0 0x0d "
+#define CMD_TWIBOOT 	"/usr/local/bin/twiboot -d /dev/i2c-1 -a 0x29 -p 0 -w flash:juice.hex "
+
+
 char bigbuf[16384];
 
-int do_avrdude(char *command, char *reply, int size)
+int do_command(char *command, char *reply, int size)
 {
     char cmdbuf[LINEBUFSZ], linebuf[LINEBUFSZ];
     FILE *procfile, *logfile;
@@ -44,15 +48,15 @@ int do_avrdude(char *command, char *reply, int size)
     strcpy(cmdbuf, command);
     strcat(cmdbuf, " ");
     strcat(cmdbuf, REDIRECTION);
-    printf("do_avrdude(): opening popen procfile '%s'\n", cmdbuf);
+    printf("do_command(): popen'ing  '%s'\n", cmdbuf);
 
     if ((procfile = popen(cmdbuf, "r")) == NULL) {
-	printf("do_avrdude: popen '%s' failed\n", cmdbuf);
+	printf("do_command: shelling '%s' failed\n", cmdbuf);
 	return -1;
     }
     
     if ((logfile = fopen(LOGFILENAME, "a")) == NULL) {
-	printf("do_avrdude: fopen '%s' failed\n", LOGFILENAME);
+	printf("do_command: fopen '%s' failed\n", LOGFILENAME);
 	fclose(procfile);
 	return -1;
     }
@@ -85,12 +89,12 @@ int do_avrdude(char *command, char *reply, int size)
 
 int put_avr_fuses(void)
 {
-    return do_avrdude(CMD_AVR_QUIET W_ALLFUSES, bigbuf, sizeof(bigbuf));
+    return do_command(CMD_AVR_QUIET W_ALLFUSES, bigbuf, sizeof(bigbuf));
 }
 
-int put_avr_flash(void)
+int put_avr_bootloader(char *filename)
 {
-    return do_avrdude(CMD_AVR_QUIET W_FLASH, bigbuf, sizeof(bigbuf));
+    return do_command(CMD_AVR_QUIET W_FLASH, bigbuf, sizeof(bigbuf));
 }
 
 int put_avr_serial(char *sermem)
@@ -105,7 +109,7 @@ int put_avr_serial(char *sermem)
     fwrite(sermem, 1, 16, neepfile);
     fclose(neepfile);
     
-    return do_avrdude(CMD_AVR_QUIET W_EEPROM, bigbuf, sizeof(bigbuf));
+    return do_command(CMD_AVR_QUIET W_EEPROM, bigbuf, sizeof(bigbuf));
 }
 
 int get_avr_serial(char *sermem)
@@ -113,7 +117,7 @@ int get_avr_serial(char *sermem)
     FILE *eepfile;
     int r, fail = 0;
     
-    r = do_avrdude(CMD_AVR_QUIET R_EEPROM, bigbuf, sizeof(bigbuf));
+    r = do_command(CMD_AVR_QUIET R_EEPROM, bigbuf, sizeof(bigbuf));
     if (r < 0) {
 	return -1;
     }
@@ -173,6 +177,28 @@ int get_new_serial(char *filename, char *result)
 }
     
 
+int put_avr_firmware(char *firmware_filename)
+{
+    FILE *eepfile;
+    int r, fail = 0;
+    
+    r = do_command(CMD_AVR_I2CRST, bigbuf, sizeof(bigbuf));
+    if (r < 0) {
+	printf("do_twiboot: CMD_AVR_I2CRST: failed.\n");
+	/* no return, because in bootloader mode, 
+	 AVR doesn't need I2C reset */
+	/* return -1; */
+    }
+    usleep(100*1000L);
+    
+    r = do_command(CMD_TWIBOOT, bigbuf, sizeof(bigbuf));
+    
+    /* DO STUFF TO CHECK twiboot SUCCESS/FAILURE FROM bigbuf*/
+    
+    return r;
+}
+
+
 int main(int argc, char *argv[])
 {
     char serial_mem[32], *p;
@@ -183,6 +209,8 @@ int main(int argc, char *argv[])
     printf("Hello, world! Testing shelling out systems calls\n\n");
     srand (time(NULL));
     randrun = (rand() % 5) + 1;
+    randrun = 1;
+    
     printf("Running a random run of %d\n", randrun);
 
     for (run = 0; run < randrun; run++) {
@@ -207,17 +235,23 @@ int main(int argc, char *argv[])
 	else
 	    printf("put_avr_serial: successful %s\n", serial_mem);
 	
-#if 1
-	if (put_avr_flash() < 0)
-	    printf("put_avr_flash: failed\n");
+	if (put_avr_bootloader(NULL) < 0)
+	    printf("put_avr_bootloader: failed\n");
 	else
-	    printf("put_avr_flash: successful\n");
+	    printf("put_avr_bootloader: successful\n");
 	
 	if (put_avr_fuses() < 0)
 	    printf("put_avr_fuses: failed\n");
 	else
 	    printf("put_avr_fuses: successful\n");
-#endif 
+	
+#if 1
+	if (put_avr_firmware(NULL) < 0)
+	    printf("put_avr_firmware: failed\n");
+	else
+	    printf("put_avr_firmware: successful\n");
+#endif	
+	
 
 	sleep(2);
     }
