@@ -10,14 +10,13 @@
 
 int rpi_rev;
 
-int fd_i2cbus = 0;
-int fd_dac1;
-int fd_dac2;
-int fd_adc;
+int fd_i2cbus;
+int fd_dac1;	/* unused */
+int fd_dac2;	/* unused */
+int fd_adc;	/* unused */
 int i2caddr_dac1 = 0x60;
+int i2caddr_dac2 = 0x61;	/* unused */
 int i2caddr_adc = 0x69;
-int i2cbus_open(const char *devbusname);
-int i2cdev_open(int fd, int i2caddr);
 
 uint8_t spi_outbuf[16];
 uint8_t spi_inbuf[16];
@@ -27,8 +26,6 @@ static uint8_t mode;
 static uint8_t bits = 8;
 static uint32_t speed = 500000;
 static uint16_t delay;
-int spi_open(const char *devbusname);
-void spi_xfer(int fd, int len, uint8_t *tx, uint8_t *rx);
 
 #define DAQ_SPISUB_CFG 1
 #define DAQ_SPISUB_LCD 2
@@ -41,15 +38,6 @@ static int lcd_data;
 #define CFG_MASK_LEDS  0x00f0
 #define CFG_MASK_I2C_B 0x0100
 #define CFG_MASK_AVREN 0x0200
-
-int  lcd_init(int rows, int cols, int bits);
-void lcd_home(void);
-void lcd_clear(void);
-void lcdSendCommand(uint8_t command);
-void lcd_pos(int row, int col);
-void lcd_putchar(uint8_t data);
-void lcd_puts(char *string);
-void lcd_printf(char *message, ...);
 
 int i2cbus_open(const char *devbusname)
 {
@@ -156,7 +144,6 @@ void spi_xfer(int fd, int len, uint8_t *tx, uint8_t *rx)
 #endif
 }
 
-
 int daq_xfer(int subsystem, int dout)
 {
     spi_outbuf[0] = subsystem >> 8;
@@ -166,6 +153,8 @@ int daq_xfer(int subsystem, int dout)
     spi_outbuf[0] = dout >> 8;
     spi_outbuf[1] = dout;
     spi_xfer(fd_spi0, 2, spi_outbuf, spi_inbuf);
+    
+    printf("daq_xfer: spi_inbuf[1, 0] = %02X %02X\n", spi_inbuf[1], spi_inbuf[0]);
     
     return (spi_inbuf[1] << 8) | (spi_inbuf[0] & 0xff);
 }
@@ -192,17 +181,11 @@ void daq_lcd_strobe(void)
     lcd_data = lcd_data & (~0x0400);
     daq_xfer(DAQ_SPISUB_LCD, lcd_data);
     usleep(50);
-
     /* unassert */
     lcd_data = lcd_data | (0x0400);
     daq_xfer(DAQ_SPISUB_LCD, lcd_data);
     usleep(50);
-#if 0
-    printf("lcd strobed\n");
-#endif
 }
-
-
 
 void daq_set_relay(int relay, int onoff)
 {
@@ -260,104 +243,61 @@ void daq_set_buffered_avr(int onoff)
     daq_xfer(DAQ_SPISUB_CFG, cfg_data);
 }
 
-void daq_set_comcfg(int setting)
+void daq_set_com_matrix(int setting)
 {
-    
     daq_xfer(DAQ_SPISUB_COM, setting);
 }
 
-int main(int argc, char *argv[])
+int rpi_daq_init(void)
 {
-    int err, numbytes, i, desired, fd1;
-    unsigned char i2c_buffer[16];
-    
-    printf("Hello, world!\n\n");
+    int i;
     
     rpi_rev = 1;
-    err = i2cbus_open("/dev/i2c-0");
-
-    if (err < 0) {
+    
+    /* Test of SPI dev and connectivity to DAQ ADC chip */
+    fd_i2cbus = i2cbus_open("/dev/i2c-0");
+    
+    if (fd_i2cbus < 0) {
 	rpi_rev = 2;
-	err = i2cbus_open("/dev/i2c-1");
+	fd_i2cbus = i2cbus_open("/dev/i2c-1");
     }
     
-    if (err < 0) {
+    if (fd_i2cbus < 0) {
 	printf("i2cbus_open: /dev/i2c-x unsuccessful, rpidaq not found.\n");
-	exit(1);
+	return -1;
     }
-    
     printf("i2cbus_open: successful, rpi_rev = %d\n", rpi_rev);
 
     fd_spi0 = spi_open("/dev/spidev0.0");
     if (fd_spi0 < 0) {
 	printf("spi_open: /dev/spidev0.0 unsuccessful.\n");
-	exit(1);
+	return -1;
     }
 
     fd_spi1 = spi_open("/dev/spidev0.1");
     if (fd_spi1 < 0) {
 	printf("spi_open: /dev/spidev0.1 unsuccessful.\n");
-	exit(1);
+	return -1;
     }
-    
+
     cfg_data = 0;
     lcd_data = 0;
-    
-    /* UI-header and LCD init */
     daq_lcd_data(0x00);
     daq_lcd_regsel(0);
     daq_set_buffered_avr(0);
     daq_set_buffered_i2c(0);
-    daq_set_comcfg(0x22);
-    
+    daq_set_com_matrix(0x00);
+
     for (i = 0; i < 4; i++) {
 	daq_set_led(i, 0);
 	daq_set_relay(i, 0);
     }
-    
-    if (argc < 2)
-	exit(0);
-    
-    desired = atoi(argv[1]);
-
-    /* switch on relay 0 */
-    daq_set_relay(0, 1);
-    sleep(2);
-    daq_set_buffered_i2c(1);
-
-#if 1
-    lcd_init(2, 20, 4);
-    printf("Got out of lcdInit()\n");
-    sleep(1);
-    lcd_pos(0, 0);
-    lcd_puts("Dave Appleton") ;
-    lcd_pos(1, 0);
-    lcd_puts("-------------") ;
-    printf("Got out of lcd_main()\n");
-#endif
-
-    if (desired == 1) {
-	printf("state = 1, setting and leaving buffered AVR interface on\n");
-	daq_set_buffered_avr(1);
-	/* leaving com port selection as RPICOM <-> AVR232 */
-	daq_set_comcfg(0x22);
-	/* Hmmm, what does this do? */
-	//daq_xfer(3, cfg_data);
-	exit(0);
-    }
-    
-
-    /* turn off everything */
-    daq_lcd_data(0x00);
-    daq_lcd_regsel(0);
-    for (i = 0; i < 4; i++) {
-	daq_set_led(i, 0);
-	daq_set_relay(i, 0);
-    }
-    daq_set_buffered_avr(0);
-    daq_set_buffered_i2c(0);
-    
     return 0;
 }
 
-
+void rpi_daq_close(void)
+{
+    close(fd_i2cbus);
+    close(fd_spi0);
+    close(fd_spi1);
+}

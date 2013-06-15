@@ -4,7 +4,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include "i2c-userspace.h"
-#include "juice-dev.h"
+#include "lib-juice.h"
 //#include "../firmware/juice.h"
 
 #define I2C_NUM_RETRIES	3
