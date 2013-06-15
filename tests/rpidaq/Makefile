@@ -7,7 +7,7 @@ LDFLAGS=
 
 TARGET=jj
 
-SOURCES=rpi-daq.c lib-lcd.c
+SOURCES=juice-jig.c rpi-daq.c rpi-daq.h lib-lcd.c lib-juice.c lib-juice.h
 OBJECTS=$(SOURCES:.c=.o)
 
 all: $(SOURCES) $(TARGET)
@@ -19,6 +19,6 @@ $(TARGET): $(OBJECTS)
 	$(CC) $(CFLAGS) $< -o $@
 
 clean:
-	-rm -rf $(TARGET) *.o
+	-rm -rf $(TARGET) *.o *~
 
 
