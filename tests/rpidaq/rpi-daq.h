@@ -8,6 +8,9 @@
 #include "i2c-userspace.h"
 #include <linux/spi/spidev.h>
 
+#ifndef RPI_DAQ_H
+#define RPI_DAQ_H
+
 int rpi_rev;
 
 int fd_i2cbus;
@@ -26,6 +29,7 @@ int fd_spi1;
 int spi_open(const char *devbusname);
 void spi_xfer(int fd, int len, uint8_t *tx, uint8_t *rx);
 
+#define DAQ_SPISUB_NOP 0
 #define DAQ_SPISUB_CFG 1
 #define DAQ_SPISUB_LCD 2
 #define DAQ_SPISUB_COM 3
@@ -34,6 +38,17 @@ void spi_xfer(int fd, int len, uint8_t *tx, uint8_t *rx);
 #define CFG_MASK_LEDS  0x00f0
 #define CFG_MASK_I2C_B 0x0100
 #define CFG_MASK_AVREN 0x0200
+
+#define MISO_MASK_SW1  0x01
+#define MISO_MASK_SW2  0x02
+#define MISO_MASK_PH1  0x04
+#define MISO_MASK_PH2  0x08
+
+#define UI_SW1		0x01
+#define UI_SW2		0x02
+#define UI_LED_RED	0x0010
+#define UI_LED_AMBER	0x0020
+#define UI_LED_GREEN	0x0040
 
 int rpi_daq_init(void);
 int rpi_daq_close(void);
@@ -59,3 +74,6 @@ void lcd_pos(int row, int col);
 void lcd_putc(uint8_t data);
 void lcd_puts(char *string);
 void lcd_printf(char *message, ...);
+
+
+#endif /* RPI_DAQ_H */
