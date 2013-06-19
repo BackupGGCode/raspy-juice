@@ -40,6 +40,9 @@
  * Continuous conversion
  */
 
+#ifndef MCP342x_H
+#define MCP342x_H
+
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -120,4 +123,7 @@ float mcp342x_get_lsb(mcp342x_adc_resolution_t res);
 
 uint8_t mcp342x_convert_gsb(mcp342x_gs_t gsb);
 
+void mcp3424_readall(float *buf);
 
+
+#endif /* MCP342x_H */

@@ -104,7 +104,12 @@
 #define MCP342X_EXT_GAIN    1.001734972
 
 /** File handle to i2c-dev */
-int fd;
+#ifdef JUICE_JIG
+  extern int fd_i2cbus;
+#else
+  int fd_i2cbus;
+#endif
+
 
 /** Configuration register */
 static uint8_t config_register;
@@ -123,9 +128,9 @@ static int16_t sample_period;
  */
 void mcp342x_init()
 {
-    fd = open(MCP342X_I2CBUS, O_RDWR); 
+    fd_i2cbus = open(MCP342X_I2CBUS, O_RDWR); 
 
-    if (fd < 0)
+    if (fd_i2cbus < 0)
     { 
         fprintf(stderr, "Fatal error: can't open i2c bus.\n"); 
         exit(1); 
@@ -141,8 +146,8 @@ uint8_t mcp342x_read_output_codes()
     /* 
      * Set i2c device in Slave mode.
      */ 
-    if (ioctl(fd, I2C_SLAVE, MCP342X_ADDR) < 0) { 
-        fprintf(stderr, "Error during i2c-dev IOCTL\n"); 
+    if (ioctl(fd_i2cbus, I2C_SLAVE, MCP342X_ADDR) < 0) { 
+        fprintf(stderr, "%s: Error during i2c-dev IOCTL\n", __func__); 
         exit(1); 
     }
 
@@ -151,13 +156,13 @@ uint8_t mcp342x_read_output_codes()
     if(mcp342x_adc_getres() == MCP342X_ADC_RES_18)
     {
         /* Read 4 bytes from i2c device */
-        bytes = read(fd, i2c_buffer, 4);
+        bytes = read(fd_i2cbus, i2c_buffer, 4);
         config_register = i2c_buffer[3];
     }
     else
     {
         /* Read 3 bytes from i2c device */
-        bytes = read(fd, i2c_buffer, 3);
+        bytes = read(fd_i2cbus, i2c_buffer, 3);
         config_register = i2c_buffer[2];
     }
     
@@ -239,8 +244,8 @@ void mcp342x_set_config(mcp342x_adc_ch_t channel, mcp342x_gs_t gain, mcp342x_adc
     /* 
      * Set i2c device in Slave mode.
      */ 
-    if (ioctl(fd, I2C_SLAVE, MCP342X_ADDR) < 0) { 
-        fprintf(stderr, "Error during i2c-dev IOCTL\n"); 
+    if (ioctl(fd_i2cbus, I2C_SLAVE, MCP342X_ADDR) < 0) { 
+        fprintf(stderr, "%s: Error during i2c-dev IOCTL\n", __func__);
         exit(1); 
     }
 
@@ -266,7 +271,7 @@ void mcp342x_set_config(mcp342x_adc_ch_t channel, mcp342x_gs_t gain, mcp342x_adc
 
     // Write to device
     //printf("Writing config: %02x\n", config_register);
-    write(fd, &config_register, sizeof(config_register));
+    write(fd_i2cbus, &config_register, sizeof(config_register));
 }
 
 #if 1
@@ -278,7 +283,7 @@ void mcp342x_set_config(mcp342x_adc_ch_t channel, mcp342x_gs_t gain, mcp342x_adc
  */
 bool mcp342x_request_conversion()
 {
-    
+    return 0;
 }
 #else
 /**
@@ -307,7 +312,7 @@ bool mcp342x_request_conversion(mcp342x_adc_ch_t channel)
                 config_register_tmp |= (channel << MCP342X_CONFIG_CSB);
                 config_register = config_register_tmp;
 
-                i2c_smbus_write_byte_data(fd, 0, config_register);
+                i2c_smbus_write_byte_data(fd_i2cbus, 0, config_register);
 
                 return true;
             }
