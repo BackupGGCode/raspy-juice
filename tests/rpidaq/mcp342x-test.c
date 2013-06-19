@@ -2,7 +2,7 @@
 #include <unistd.h>
 #include "mcp342x.h"
 
-
+extern int fd_i2cbus;
 
 int mcp3424_readall(float *buf)
 {
@@ -22,7 +22,8 @@ int main(void)
     float val[4];
     
     mcp342x_init();
-
+    printf("Test app of mcp342x.c in juice-jig context, fd_i2cbus = %d\n\n",
+	   fd_i2cbus);
 
 #if 0
     mcp342x_set_config(MCP342X_ADC_CH4, MCP342X_GS_X1, MCP342X_ADC_RES_16, MCP342X_OC_CONTINUOUS);
