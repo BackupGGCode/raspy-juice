@@ -43,7 +43,7 @@ int i2cbus_open(const char *devbusname)
 {
     int rval;
     unsigned char i2c_buffer[16];
-    
+
     /* test bus */
     fd_i2cbus = open(devbusname, O_RDWR);
     if (fd_i2cbus < 0)
@@ -58,8 +58,8 @@ int i2cbus_open(const char *devbusname)
     rval = read(fd_i2cbus, i2c_buffer, 4);
     if (rval < 0)
 	return -3;
-    
-    return 0;
+
+    return fd_i2cbus;
 }
     
 int spi_open(const char *devbusname)
@@ -154,7 +154,9 @@ int daq_xfer(int subsystem, int dout)
     spi_outbuf[1] = dout;
     spi_xfer(fd_spi0, 2, spi_outbuf, spi_inbuf);
     
+#if 0    
     printf("daq_xfer: spi_inbuf[1, 0] = %02X %02X\n", spi_inbuf[1], spi_inbuf[0]);
+#endif
     
     return (spi_inbuf[1] << 8) | (spi_inbuf[0] & 0xff);
 }
@@ -164,6 +166,7 @@ int  daq_lcd_data(int data)
     lcd_data = lcd_data & 0xff00;
     lcd_data = lcd_data | (data & 0xff);
     daq_xfer(DAQ_SPISUB_LCD, lcd_data);
+    usleep(50);
     return 0;
 }
 
@@ -172,6 +175,7 @@ void daq_lcd_regsel(int addr)
     lcd_data = lcd_data & (~0x0100);
     lcd_data = lcd_data | (addr ? 0x0100 : 0);
     daq_xfer(DAQ_SPISUB_LCD, lcd_data);
+    usleep(50);
 }
 
 void daq_lcd_strobe(void)
@@ -266,19 +270,23 @@ int rpi_daq_init(void)
 	printf("i2cbus_open: /dev/i2c-x unsuccessful, rpidaq not found.\n");
 	return -1;
     }
-    printf("i2cbus_open: successful, rpi_rev = %d\n", rpi_rev);
+    printf("i2cbus_open: successful, fd_i2cbus = %d, rpi_rev = %d\n",
+	   fd_i2cbus,
+	   rpi_rev);
 
     fd_spi0 = spi_open("/dev/spidev0.0");
     if (fd_spi0 < 0) {
 	printf("spi_open: /dev/spidev0.0 unsuccessful.\n");
 	return -1;
     }
+    printf("spi_open: successful, fd_spi0 = %d\n", fd_spi0);
 
     fd_spi1 = spi_open("/dev/spidev0.1");
     if (fd_spi1 < 0) {
 	printf("spi_open: /dev/spidev0.1 unsuccessful.\n");
 	return -1;
     }
+    printf("spi_open: successful, fd_spi1 = %d\n", fd_spi1);
 
     cfg_data = 0;
     lcd_data = 0;
