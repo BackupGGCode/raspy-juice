@@ -1,12 +1,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <time.h>
+
+#include "juice-jig.h"
 
 #define CODE_PRODUCT	"RJ2B"
 
 #define COUNTERFILE	"sernum.txt"
+
+#ifndef JUICE_JIG
 #define LOGFILENAME	"jlog.txt"
+#endif
 
 #define CMD_AVRDUDE	"/usr/local/bin/avrdude -c linuxgpio -p m168 "
 #define CMD_AVR_QUIET	"/usr/local/bin/avrdude -c linuxgpio -p m168 -qq "
@@ -40,7 +46,10 @@ char bigbuf[16384];
 int do_command(char *command, char *reply, int size)
 {
     char cmdbuf[LINEBUFSZ], linebuf[LINEBUFSZ];
-    FILE *procfile, *logfile;
+    FILE *procfile;
+#ifndef JUICE_JIG
+    FILE *logfile;
+#endif
     int fail = 0, total_size = 0;
     time_t nowtime;
     struct tm *tm_info;
@@ -56,12 +65,14 @@ int do_command(char *command, char *reply, int size)
 	return -1;
     }
     
+#ifndef JUICE_JIG
     if ((logfile = fopen(LOGFILENAME, "a")) == NULL) {
 	printf("do_command: fopen '%s' failed\n", LOGFILENAME);
 	fclose(procfile);
 	return -1;
     }
-
+#endif
+    
     while (!feof(procfile)) {
 	fgets(linebuf, LINEBUFSZ, procfile);
 	
@@ -80,8 +91,9 @@ int do_command(char *command, char *reply, int size)
 	    fail = 1;
 	}
     }
-
+#ifndef JUICE_JIG
     fclose(logfile);
+#endif
     fclose(procfile);
     if (fail)
 	return -total_size;
@@ -200,6 +212,64 @@ int put_avr_firmware(char *firmware_filename)
 }
 
 
+int do_avr_run(void)
+{
+    char serial_mem[32], *p;
+    int r, i, sernum;
+    int randrun, run;
+
+    r = get_avr_serial(serial_mem);
+    if (r < 0) {
+	printf("get_avr_serial: failed\n");
+	return -1;
+    }
+    else 
+	printf("get_avr_serial: successful %s\n", serial_mem);
+    
+    /* Should get & put a new serial number only if needed */
+    r = get_new_serial(COUNTERFILE, serial_mem);
+    if (r < 0) {
+	printf("get_new_serial: failed\n");
+	return -2;
+    }
+    else
+	printf("get_new_serial: successful %s\n", serial_mem);
+    
+    r = put_avr_serial(serial_mem);
+    if (r < 0) {
+	printf("put_avr_serial: failed\n");
+	return -3;
+    }
+    else
+	printf("put_avr_serial: successful %s\n", serial_mem);
+    
+    if (put_avr_bootloader(NULL) < 0) {
+	printf("put_avr_bootloader: failed\n");
+	return -4;
+    }
+    else
+	printf("put_avr_bootloader: successful\n");
+    
+    if (put_avr_fuses() < 0) {
+	printf("put_avr_fuses: failed\n");
+	return -5;
+    }
+    else
+	printf("put_avr_fuses: successful\n");
+    
+    if (put_avr_firmware(NULL) < 0) {
+	printf("put_avr_firmware: failed\n");
+	return -6;
+    }
+    else
+	printf("put_avr_firmware: successful\n");
+    
+    return 0;
+}
+
+
+
+#ifdef TESTMAIN
 int main(int argc, char *argv[])
 {
     char serial_mem[32], *p;
@@ -216,51 +286,10 @@ int main(int argc, char *argv[])
 
     for (run = 0; run < randrun; run++) {
 	printf("\nRUN #%d\n", run);
-	
-	r = get_avr_serial(serial_mem);
-	if (r < 0)
-	    printf("get_avr_serial: failed\n");
-	else 
-	    printf("get_avr_serial: successful %s\n", serial_mem);
-	
-#if 1
-	/* Should get & put a new serial number only if needed */
-	r = get_new_serial(COUNTERFILE, serial_mem);
-	if (r < 0)
-	    printf("get_new_serial: failed\n");
-	else
-	    printf("get_new_serial: successful %s\n", serial_mem);
-	
-	r = put_avr_serial(serial_mem);
-	if (r < 0)
-	    printf("put_avr_serial: failed\n");
-	else
-	    printf("put_avr_serial: successful %s\n", serial_mem);
-	
-	if (put_avr_bootloader(NULL) < 0)
-	    printf("put_avr_bootloader: failed\n");
-	else
-	    printf("put_avr_bootloader: successful\n");
-	
-	if (put_avr_fuses() < 0)
-	    printf("put_avr_fuses: failed\n");
-	else
-	    printf("put_avr_fuses: successful\n");
-	
-	if (put_avr_firmware(NULL) < 0)
-	    printf("put_avr_firmware: failed\n");
-	else
-	    printf("put_avr_firmware: successful\n");
-#endif
-	sleep(2);
-
-	test_avr232_comms(1);
-
-
-	
+	do_avr_run();
     }
     
     printf("Test ended.\n");    
     return 0;   
 }
-
+#endif
