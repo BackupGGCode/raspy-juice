@@ -10,10 +10,6 @@
 
 #define COUNTERFILE	"sernum.txt"
 
-#ifndef JUICE_JIG
-#define LOGFILENAME	"jlog.txt"
-#endif
-
 #define CMD_AVRDUDE	"/usr/local/bin/avrdude -c linuxgpio -p m168 "
 #define CMD_AVR_QUIET	"/usr/local/bin/avrdude -c linuxgpio -p m168 -qq "
 #define REDIRECTION	" 2>&1 "
@@ -31,23 +27,54 @@
 #define W_FLASH		" -U flash:w:twiboot-win.hex"
 #define R_EEPROM	" -U eeprom:r:eep.raw:r"
 #define W_EEPROM	" -U eeprom:w:eep-new.raw:r"
-#define SERNUM_OFFSET	(512-16)
+#define EE_SER_OFFSET	(512-16)
 
 #define LINEBUFSZ	256
 #define FMT_FULLDATE	"[%Y-%m-%d %H:%M:%S %Z]"
 
 #define CMD_AVR_I2CRST 	"/usr/bin/i2cset -y 1  0x48 0xb0 0x0d "
-#define CMD_TWIBOOT 	"/usr/local/bin/twiboot -d /dev/i2c-1 -a 0x29 -p 0 -w flash:juice.hex "
+#define CMD_TWIBOOT_I2CREV1	"/usr/local/bin/twiboot -d /dev/i2c-0 -a 0x29 -p 0 -w flash:juice.hex "
+#define CMD_TWIBOOT_I2CREV2	"/usr/local/bin/twiboot -d /dev/i2c-1 -a 0x29 -p 0 -w flash:juice.hex "
 
 
-int test_avr232_comms(int randrun);
 char bigbuf[16384];
+
+#ifdef	STANDALONE
+
+#define LOGFILENAME	"jlog.txt"
+int i2caddr_adc = 0x69;
+int rpi_rev = 0;
+
+int i2cbus_open(const char *devbusname)
+{
+    int rval;
+    unsigned char i2c_buffer[16];
+
+    /* test bus */
+    fd_i2cbus = open(devbusname, O_RDWR);
+    if (fd_i2cbus < 0)
+	return -1;
+
+    /* setup ADC device as slave*/
+    fd_adc = ioctl(fd_i2cbus, I2C_SLAVE, i2caddr_adc);
+    if (fd_adc < 0)
+       return -2;
+    
+    /* read ADC device */
+    rval = read(fd_i2cbus, i2c_buffer, 4);
+    if (rval < 0)
+	return -3;
+
+    return fd_i2cbus;
+}
+#endif	/* STANDALONE */
+
 
 int do_command(char *command, char *reply, int size)
 {
     char cmdbuf[LINEBUFSZ], linebuf[LINEBUFSZ];
     FILE *procfile;
-#ifndef JUICE_JIG
+#ifdef STANDALONE
     FILE *logfile;
 #endif
     int fail = 0, total_size = 0;
@@ -65,7 +92,7 @@ int do_command(char *command, char *reply, int size)
 	return -1;
     }
     
-#ifndef JUICE_JIG
+#ifdef STANDALONE
     if ((logfile = fopen(LOGFILENAME, "a")) == NULL) {
 	printf("do_command: fopen '%s' failed\n", LOGFILENAME);
 	fclose(procfile);
@@ -91,10 +118,11 @@ int do_command(char *command, char *reply, int size)
 	    fail = 1;
 	}
     }
-#ifndef JUICE_JIG
+
+    fclose(procfile);
+#ifdef STANDALONE
     fclose(logfile);
 #endif
-    fclose(procfile);
     if (fail)
 	return -total_size;
     return total_size;
@@ -118,7 +146,7 @@ int put_avr_serial(char *sermem)
 	printf("put_avr_serial: open eep-new.raw file failed\n");
 	return -1;
     }
-    fseek(neepfile, 512-16, SEEK_SET);
+    fseek(neepfile, EE_SER_OFFSET, SEEK_SET);
     fwrite(sermem, 1, 16, neepfile);
     fclose(neepfile);
     
@@ -203,8 +231,16 @@ int put_avr_firmware(char *firmware_filename)
 	/* return -1; */
     }
     usleep(100*1000L);
-    
-    r = do_command(CMD_TWIBOOT, bigbuf, sizeof(bigbuf));
+
+    if (rpi_rev == 1) {
+	r = do_command(CMD_TWIBOOT_I2CREV1, bigbuf, sizeof(bigbuf));
+    }
+    else if (rpi_rev == 2) {
+	r = do_command(CMD_TWIBOOT_I2CREV2, bigbuf, sizeof(bigbuf));
+    }
+    else {
+	printf("put_avr_firmware: rpi_rev incorrectly, or not set\n");
+    }
     
     /* DO STUFF TO CHECK twiboot SUCCESS/FAILURE FROM bigbuf*/
     
@@ -269,7 +305,7 @@ int do_avr_run(void)
 
 
 
-#ifdef TESTMAIN
+#ifdef STANDALONE
 int main(int argc, char *argv[])
 {
     char serial_mem[32], *p;
@@ -278,6 +314,22 @@ int main(int argc, char *argv[])
     
     
     printf("Hello, world! Testing shelling out systems calls\n\n");
+
+    /* Test of RPI-DAQ existence and Pi revision */
+    rpi_rev = 1;
+    fd_i2cbus = i2cbus_open("/dev/i2c-0");
+    if (fd_i2cbus < 0) {
+	rpi_rev = 2;
+	fd_i2cbus = i2cbus_open("/dev/i2c-1");
+    }
+    if (fd_i2cbus < 0) {
+	printf("i2cbus_open: /dev/i2c-x unsuccessful, DAQ not found.\n");
+	return -1;
+    }
+    printf("i2cbus open: successful, rpi_rev = %d, fd_i2cbus = %d\n",
+	   rpi_rev, fd_i2cbus);
+
+
     srand (time(NULL));
     randrun = (rand() % 5) + 1;
     randrun = 1;
