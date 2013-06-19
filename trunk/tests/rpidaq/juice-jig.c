@@ -130,18 +130,31 @@ int main(int argc, char *argv[])
 	sleep(1);
     	adc_printall(adc_vals);
 	
+	/* fixme: test power levels */
+	
+	/* Turn on DUT I2C buffered connection */
+	daq_set_buffered_i2c(1);
+	daq_set_buffered_avr(1);
+
 	/* do AVR stuff */
 	r = do_avr_run();
 	printf("main: do_avr_run r = %d\n", r);
 	
+	/* fixme: test of power LED, and AVR service firmware flashing */
 	
-	/* do com port stuff */
+	/* fixme: do com port stuff */
 	
-	/* do pin port stuff */
+	/* fixme: do pin port stuff */
+	
+	/* fixme: status report generation */
     
     }
-
     
+    if (desired == 3) {
+	/* Do loopy-loop of desired==2 one-time test
+	 * with push button start, and halfway stopping
+	 */
+    }
     
     /* turn off everything */
     daq_lcd_data(0x00);
