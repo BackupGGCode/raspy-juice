@@ -225,7 +225,7 @@ int put_avr_firmware(char *firmware_filename)
     
     r = do_command(CMD_AVR_I2CRST, bigbuf, sizeof(bigbuf));
     if (r < 0) {
-	printf("do_twiboot: CMD_AVR_I2CRST: failed.\n");
+	printf("do_twiboot: CMD_AVR_I2CRST: failed, but may continue...\n");
 	/* no return, because in bootloader mode, 
 	 AVR doesn't need I2C reset */
 	/* return -1; */
