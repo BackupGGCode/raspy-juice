@@ -80,22 +80,30 @@ int main(int argc, char *argv[])
     lcd_pos(1, 0);
     lcd_puts("----------------") ;
 
-    /* Just a test turn-on for AVR programming development */
+    /* Just a quickie turn-on for AVR programming development */
     if (desired == 1) {
 	/* Turn on DUT power and settle */
 	daq_set_relay(RELAY_VIN, 1);
-	sleep(1);
+	usleep(1000U * 200);
+	/* leaving com port selection as RPICOM <-> AVR232 */
+	daq_set_com_matrix(0x22);
+
+	/* Turn on load relays for +3V-AUX, +5V-SERVO, +5V-MAIN */
+	daq_set_relay(RELAY_5VMAIN, 1);
+	usleep(1000U * 200);
+
+	daq_set_relay(RELAY_5VSERVO, 1);
+	usleep(1000U * 200);
+
+	daq_set_relay(RELAY_3VAUX, 1);
+	usleep(1000U * 200);
+
+	adc_printall(adc_vals);
+	
 	/* Turn on DUT I2C buffered connection */
 	daq_set_buffered_i2c(1);
 	daq_set_buffered_avr(1);
-	/* leaving com port selection as RPICOM <-> AVR232 */
-	daq_set_com_matrix(0x22);
-	/* Turn on load relays for +3V-AUX, +5V-SERVO, +5V-MAIN */
-	daq_set_relay(RELAY_5VMAIN, 1);
-	sleep(1);
-	daq_set_relay(RELAY_5VSERVO, 1);
-	sleep(1);
-	daq_set_relay(RELAY_3VAUX, 1);
+
 	lcd_clear();
 	lcd_puts("JJ State 1");
 	printf("Exiting as state = 1, power-on and leaving buffered AVR interface on\n");
@@ -114,20 +122,20 @@ int main(int argc, char *argv[])
 #endif
 	/* Turn on DUT power and settle */
 	daq_set_relay(RELAY_VIN, 1);
-	sleep(1);
+	usleep(1000U * 200);
 	adc_printall(adc_vals);
 
 	/* Turn on DUT loads, settle and measure */
 	daq_set_relay(RELAY_5VMAIN, 1);
-	sleep(1);
+	usleep(1000U * 200);
 	adc_printall(adc_vals);
 
 	daq_set_relay(RELAY_5VSERVO, 1);
-	sleep(1);
+	usleep(1000U * 200);
 	adc_printall(adc_vals);
 
 	daq_set_relay(RELAY_3VAUX, 1);
-	sleep(1);
+	usleep(1000U * 200);
     	adc_printall(adc_vals);
 	
 	/* fixme: test power levels */
