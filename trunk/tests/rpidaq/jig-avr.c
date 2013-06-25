@@ -21,8 +21,8 @@
 
 #define W_EFUSE		" -U efuse:w:0x02:m"
 #define W_HFUSE		" -U hfuse:w:0xD7:m"
-#define W_LFUSE		" -U lfuse:w:0xE6:m"
-#define W_ALLFUSES	" -c linuxgpio -p m168 -U efuse:w:0x02:m -U hfuse:w:0xD7:m -U lfuse:w:0xE6:m"
+#define W_LFUSE		" -U lfuse:w:0xF7:m"
+#define W_ALLFUSES	" -c linuxgpio -p m168 -U efuse:w:0x02:m -U hfuse:w:0xD7:m -U lfuse:w:0xF7:m"
 
 #define W_FLASH		" -U flash:w:twiboot-win.hex"
 #define R_EEPROM	" -U eeprom:r:eep.raw:r"
