@@ -32,6 +32,76 @@ void tldp_com_example_init(void);
 void tldp_com_example_loop(void);
 void tldp_com_example_exit(void);
 
+void tldp_com_example_init(void)
+{
+    struct termios newtio;
+    struct sigaction saio;           /* definition of signal action */
+    
+    /* From http://www.tldp.org/HOWTO/Serial-Programming-HOWTO/x115.html#AEN129 */
+    /* open the device to be non-blocking (read will return immediatly) */
+    fd_ttyAMA0 = open(MODEMDEVICE, O_RDWR | O_NOCTTY | O_NONBLOCK);
+    if (fd_ttyAMA0 < 0) {
+	perror(MODEMDEVICE);
+	exit(-1);
+    }
+   
+    /* save current port settings */
+    tcgetattr(fd_ttyAMA0, &oldtio);
+    /* set new port settings for canonical input processing */
+    newtio.c_cflag = BAUDRATE | CRTSCTS | CS8 | CLOCAL | CREAD;
+    newtio.c_iflag = IGNPAR | ICRNL;
+    newtio.c_oflag = 0;
+    /* minimum one character, or 1 character timeout */
+    newtio.c_cc[VMIN]=1;
+    newtio.c_cc[VTIME]=1;
+    tcflush(fd_ttyAMA0, TCIFLUSH);
+    tcsetattr(fd_ttyAMA0, TCSANOW, &newtio);
+}
+
+
+void tldp_com_example_loop(void)
+{
+    int c, res;
+    char buf[255];
+
+    /* loop while waiting for input. normally
+     we would do something useful here */ 
+    while (STOP==FALSE) {
+	printf(".\n");
+	usleep(100000);
+	/* after receiving SIGIO, wait_flag = FALSE, input is available
+	 and can be read */
+	if (wait_flag==FALSE) { 
+	    res = read(fd_ttyAMA0, buf, 255);
+	    buf[res]=0;
+	    printf(":%s:%d\n", buf, res);
+	    /* stop loop if only a CR was input */
+	    if (res==1)
+		STOP=TRUE; 
+	    /* wait for new input */
+	    wait_flag = TRUE;
+	}
+    }
+}
+
+void tldp_com_example_exit(void)
+{
+    /* restore old port settings */
+    tcsetattr(fd_ttyAMA0, TCSANOW, &oldtio);
+}
+
+/***************************************************************************
+ * signal handler. sets wait_flag to FALSE, to indicate above loop that     *
+ * characters have been received.                                           *
+ ***************************************************************************/
+        
+void signal_handler_IO (int status)
+{
+    printf("received SIGIO signal.\n");
+    wait_flag = FALSE;
+}
+
+
 int test_avr232_comms(int randrun)
 {
     char devbusname[] = "/dev/i2c-1";
@@ -116,71 +186,3 @@ int test_avr232_comms(int randrun)
 }
 
 
-void tldp_com_example_init(void)
-{
-    struct termios newtio;
-    struct sigaction saio;           /* definition of signal action */
-    
-    /* From http://www.tldp.org/HOWTO/Serial-Programming-HOWTO/x115.html#AEN129 */
-    /* open the device to be non-blocking (read will return immediatly) */
-    fd_ttyAMA0 = open(MODEMDEVICE, O_RDWR | O_NOCTTY | O_NONBLOCK);
-    if (fd_ttyAMA0 < 0) {
-	perror(MODEMDEVICE);
-	exit(-1);
-    }
-   
-    /* save current port settings */
-    tcgetattr(fd_ttyAMA0, &oldtio);
-    /* set new port settings for canonical input processing */
-    newtio.c_cflag = BAUDRATE | CRTSCTS | CS8 | CLOCAL | CREAD;
-    newtio.c_iflag = IGNPAR | ICRNL;
-    newtio.c_oflag = 0;
-    /* minimum one character, or 1 character timeout */
-    newtio.c_cc[VMIN]=1;
-    newtio.c_cc[VTIME]=1;
-    tcflush(fd_ttyAMA0, TCIFLUSH);
-    tcsetattr(fd_ttyAMA0, TCSANOW, &newtio);
-}
-
-
-void tldp_com_example_loop(void)
-{
-    int c, res;
-    char buf[255];
-
-    /* loop while waiting for input. normally
-     we would do something useful here */ 
-    while (STOP==FALSE) {
-	printf(".\n");
-	usleep(100000);
-	/* after receiving SIGIO, wait_flag = FALSE, input is available
-	 and can be read */
-	if (wait_flag==FALSE) { 
-	    res = read(fd_ttyAMA0, buf, 255);
-	    buf[res]=0;
-	    printf(":%s:%d\n", buf, res);
-	    /* stop loop if only a CR was input */
-	    if (res==1)
-		STOP=TRUE; 
-	    /* wait for new input */
-	    wait_flag = TRUE;
-	}
-    }
-}
-
-void tldp_com_example_exit(void)
-{
-    /* restore old port settings */
-    tcsetattr(fd_ttyAMA0, TCSANOW, &oldtio);
-}
-
-/***************************************************************************
- * signal handler. sets wait_flag to FALSE, to indicate above loop that     *
- * characters have been received.                                           *
- ***************************************************************************/
-        
-void signal_handler_IO (int status)
-{
-    printf("received SIGIO signal.\n");
-    wait_flag = FALSE;
-}
