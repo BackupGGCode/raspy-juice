@@ -255,20 +255,17 @@ ISR(TIMER2_COMPA_vect)
 }
 
 
-//#ifdef STANDALONE_UART_TEST
+#ifdef STANDALONE_UART_TEST
 
-// dammit what's wrong with the avr-CPP @%$%!?!
-// avr-gcc -mmcu=atmega168a -Wall -gdwarf-2 -std=gnu99 
-//     -DF_CPU=14745600UL 
-//     -Os -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
-//     -MD -MP -MT -DSTANDALONE_UART_TEST -o svc-tests.hex svc-tests.c
-// HEX_FLASH_FLAGS = -R .eeprom -R .fuse -R .lock -R .signature
-// avr-objcopy -j .text -j .data -O ihex svc-tests.elf svc-tests.hex
-
-//#ifdef STANDALONE_UART_TEST
-//#error har Har HAR!!!
-//#endif
-
+/*
+ * compile with:
+avr-gcc -mmcu=atmega168a -Wall -Os -gdwarf-2 -std=gnu99 
+  -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums \
+  -DF_CPU=14745600UL -DSTANDALONE_UART_TEST \
+  -o svc-tests.elf svc-tests.c
+avr-objcopy -O ihex -R .eeprom -R .fuse -R .lock -R .signature \
+  svc-tests.elf svc-tests.hex
+ */
 int main(void)
 {
     char c;
@@ -289,6 +286,6 @@ int main(void)
 	}
     }
 }
-//#endif
+#endif
 
  
