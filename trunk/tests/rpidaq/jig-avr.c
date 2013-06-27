@@ -1,7 +1,8 @@
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <strings.h>
 #include <time.h>
 
 #include "juice-jig.h"
@@ -155,8 +156,8 @@ int put_avr_serial(char *sermem)
 
 int get_avr_serial(char *sermem)
 {
+    int r;
     FILE *eepfile;
-    int r, fail = 0;
     
     r = do_command(CMD_AVR_QUIET R_EEPROM, bigbuf, sizeof(bigbuf));
     if (r < 0) {
@@ -165,7 +166,7 @@ int get_avr_serial(char *sermem)
     
     if ((eepfile = fopen("eep.raw", "r")) == NULL) {
 	printf("%s: open eep.raw file failed\n", __func__);
-	fail = 1;
+	return -2;
     }
     fseek(eepfile, 512-16, SEEK_SET);
     fread(sermem, 1, 16, eepfile);
@@ -220,8 +221,7 @@ int get_new_serial(char *filename, char *result)
 
 int put_avr_firmware(char *firmware_filename)
 {
-    FILE *eepfile;
-    int r, fail = 0;
+    int r;
     
     r = do_command(CMD_AVR_I2CRST, bigbuf, sizeof(bigbuf));
     if (r < 0) {
@@ -250,9 +250,8 @@ int put_avr_firmware(char *firmware_filename)
 
 int do_avr_run(void)
 {
-    char serial_mem[32], *p;
-    int r, i, sernum;
-    int randrun, run;
+    char serial_mem[32];
+    int r;
 
     r = get_avr_serial(serial_mem);
     if (r < 0) {

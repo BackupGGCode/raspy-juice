@@ -329,7 +329,6 @@ int main(void)
 	
 	
 	
-#else
 	/* Testing rs232 echo */
 	if (rs232_havechar()) {
 	    c = rs232_getc();
