@@ -8,6 +8,12 @@
 #include "i2c-userspace.h"
 #include <linux/spi/spidev.h>
 
+
+#include <termios.h>
+#include <fcntl.h>
+#include <sys/signal.h>
+#include <sys/types.h>
+
 int rpi_rev;
 
 int fd_i2cbus;
@@ -38,6 +44,14 @@ static int lcd_data;
 #define CFG_MASK_LEDS  0x00f0
 #define CFG_MASK_I2C_B 0x0100
 #define CFG_MASK_AVREN 0x0200
+
+#define BAUDRATE	B9600
+#define COMPORT_DEVICE	"/dev/ttyAMA0"
+#define _POSIX_SOURCE	1 /* POSIX compliant source */
+
+int fd_comport = 0;
+static struct termios oldtio;
+
 
 int i2cbus_open(const char *devbusname)
 {
@@ -247,7 +261,7 @@ void daq_set_buffered_avr(int onoff)
     daq_xfer(DAQ_SPISUB_CFG, cfg_data);
 }
 
-void daq_set_com_matrix(int setting)
+void daq_set_comms_matrix(int setting)
 {
     daq_xfer(DAQ_SPISUB_COM, setting);
 }
@@ -294,7 +308,7 @@ int rpi_daq_init(void)
     daq_lcd_regsel(0);
     daq_set_buffered_avr(0);
     daq_set_buffered_i2c(0);
-    daq_set_com_matrix(0x00);
+    daq_set_comms_matrix(0x00);
 
     for (i = 0; i < 4; i++) {
 	daq_set_led(i, 0);
@@ -308,4 +322,59 @@ void rpi_daq_close(void)
     close(fd_i2cbus);
     close(fd_spi0);
     close(fd_spi1);
+}
+
+
+int rpi_comport_open(char *devpathname)
+{
+    struct termios newtio;
+    
+    /* If already opened, just return the fd */
+    if (fd_comport > 0)
+	return fd_comport;
+    /* open the device to be non-blocking (read will return immediately) */
+    fd_comport = open(devpathname, O_RDWR | O_NOCTTY | O_NONBLOCK);
+    if (fd_comport < 0) {
+	perror(devpathname);
+	return -1;
+    }
+    /* save current port settings */
+    tcgetattr(fd_comport, &oldtio);
+    /* set new port settings for raw & non-canonical input processing */
+    cfmakeraw(&newtio);
+    cfsetspeed(&newtio, B9600);
+    /* minimum one character, or 1 character timeout */
+    newtio.c_cc[VMIN] = 1;
+    newtio.c_cc[VTIME] = 1;
+    tcflush(fd_comport, TCIOFLUSH);
+    tcsetattr(fd_comport, TCSANOW, &newtio);
+    return 0;
+}
+
+int rpi_comport_setbaud(int baudrate)
+{
+    struct termios tmptio;
+
+    if (fd_comport <= 0) {
+	fprintf(stderr, "Error in coding: RPi comport wasn't opened.\n");
+	exit(-1);
+    }
+    /* get current port settings */
+    tcgetattr(fd_comport, &tmptio);
+    /* set new baud rate and preserve everything else */
+    cfsetspeed(&tmptio, baudrate);
+    tcflush(fd_comport, TCIOFLUSH);
+    tcsetattr(fd_comport, TCSANOW, &tmptio);
+    return 0;
+}
+
+void rpi_comport_close(void)
+{
+    if (fd_comport > 0) {
+	tcflush(fd_comport, TCIFLUSH);
+	/* restore old port settings */
+	tcsetattr(fd_comport, TCSANOW, &oldtio);
+	close(fd_comport);
+	fd_comport = 0;
+    }
 }

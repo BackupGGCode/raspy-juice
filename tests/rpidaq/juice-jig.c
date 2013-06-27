@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include "lib-juice.h"
 #include "juice-jig.h"
 #include "mcp342x.h"
 
@@ -47,9 +48,58 @@ void adc_printall(float vals[4])
     printf("\n");
 }
 
+
+static int rj_initialize(void)
+{   
+    int r;
+    char devbusname[] = "/dev/i2c-0";
+    int i2caddr = AVRSLAVE_ADDR;
+    char *version;
+    
+    r = rj_open(devbusname, i2caddr);
+    if (r < 0) {
+	printf("juice: open %s: failed, r = %d\n", devbusname, r);
+	return -1;
+    }
+    else {
+	printf("juice: open at 0x%02x: succeeded.\n", i2caddr);
+    }
+    
+    version = rj_getversion();
+    if (version == NULL) {
+	printf("juice: rj_getversion: failed.\n\n");
+	return -2;
+    }
+    else {
+	printf("juice: firmware version = %s\n\n", version);
+    }
+
+    return 0;
+}
+
+
+void close_exit(int exitcode)
+{
+    int i;
+    
+    /* turn off everything */
+    daq_lcd_data(0x00);
+    daq_lcd_regsel(0);
+    for (i = 0; i < 4; i++) {
+	daq_set_led(i, 0);
+	daq_set_relay(i, 0);
+    }
+    daq_set_buffered_avr(0);
+    daq_set_buffered_i2c(0);
+    rpi_comport_close();
+    printf("\nmain: closed everything.\n\n");
+    exit(exitcode);
+}
+    
+    
 int main(int argc, char *argv[])
 {
-    int i, desired, r;
+    int r, desired;
     float adc_vals[4];
     
     printf("Hello, world!\n");
@@ -67,26 +117,22 @@ int main(int argc, char *argv[])
     lcd_init(2, 20, 4);
     //mcp342x_init(); using global rpi-daq::fd_i2cbus
 
-    if (argc < 2)
-	exit(0);
-    
-    /* my haha optargs */
-    desired = atoi(argv[1]);
+    desired = 0;
+    if (argc > 1)
+	desired = atoi(argv[1]);
+	
 
-    /* switch on relay 0 */
-
+    /* Default LCD message */
     lcd_pos(0, 0);
     lcd_puts("Juice Jig Tester") ;
     lcd_pos(1, 0);
     lcd_puts("----------------") ;
 
-    /* Just a quickie turn-on for AVR programming development */
+    /* Just a quick turn-on for AVR programming development */
     if (desired == 1) {
 	/* Turn on DUT power and settle */
 	daq_set_relay(RELAY_VIN, 1);
 	usleep(1000U * 200);
-	/* leaving com port selection as RPICOM <-> AVR232 */
-	daq_set_com_matrix(0x22);
 
 	/* Turn on load relays for +3V-AUX, +5V-SERVO, +5V-MAIN */
 	daq_set_relay(RELAY_5VMAIN, 1);
@@ -100,7 +146,7 @@ int main(int argc, char *argv[])
 
 	adc_printall(adc_vals);
 	
-	/* Turn on DUT I2C buffered connection */
+	/* Turn on jig buffered connections */
 	daq_set_buffered_i2c(1);
 	daq_set_buffered_avr(1);
 
@@ -123,16 +169,16 @@ int main(int argc, char *argv[])
 	/* Turn on DUT power and settle */
 	daq_set_relay(RELAY_VIN, 1);
 	usleep(1000U * 200);
-	adc_printall(adc_vals);
+//	adc_printall(adc_vals);
 
 	/* Turn on DUT loads, settle and measure */
 	daq_set_relay(RELAY_5VMAIN, 1);
 	usleep(1000U * 200);
-	adc_printall(adc_vals);
+//	adc_printall(adc_vals);
 
 	daq_set_relay(RELAY_5VSERVO, 1);
 	usleep(1000U * 200);
-	adc_printall(adc_vals);
+//	adc_printall(adc_vals);
 
 	daq_set_relay(RELAY_3VAUX, 1);
 	usleep(1000U * 200);
@@ -145,12 +191,33 @@ int main(int argc, char *argv[])
 	daq_set_buffered_avr(1);
 
 	/* do AVR stuff */
-	r = do_avr_run();
+//	r = do_avr_run();
+	r = 1;
 	printf("main: do_avr_run r = %d\n", r);
 	
-	/* fixme: test of power LED, and AVR service firmware flashing */
+	/* fixme: bring Raspy Juice alive with lib-juice and set comms */
+	if (rj_initialize()) {
+	    printf("main: rj_initialize() failed.\n");
+	    close_exit(-1);
+	}
+
+#if 1
+	/* NOT YET NOT YETifdef zero because I'm pushing all com port functions
+	 * to juice-comport.c for debugging this overflow thing
+	 */
+	/* fixme: open RPi com port with default 9600,8N1 */
+	if (rpi_comport_open("/dev/ttyAMA0")) {
+	    printf("main: rpi_comport_open failed.\n");
+	    close_exit(-1);
+	}
+	printf("main: rpi_comport_open: succeeded, fd_comport = %d\n", 
+	       fd_comport);
+
+#endif
+	/* fixme: do com ports test stuff */
+	test_juice_comms(1);
 	
-	/* fixme: do com port stuff */
+	/* fixme: test of power LED, and AVR service firmware flashing */
 	
 	/* fixme: do pin port stuff */
 	
@@ -164,17 +231,6 @@ int main(int argc, char *argv[])
 	 */
     }
     
-    /* turn off everything */
-    daq_lcd_data(0x00);
-    daq_lcd_regsel(0);
-    for (i = 0; i < 4; i++) {
-	daq_set_led(i, 0);
-	daq_set_relay(i, 0);
-    }
-    daq_set_buffered_avr(0);
-    daq_set_buffered_i2c(0);
-    
+    close_exit(0);
     return 0;
 }
-
-

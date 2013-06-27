@@ -11,6 +11,7 @@ SOURCES = juice-jig.c juice-jig.h \
 	rpi-daq.c rpi-daq.h \
 	lib-lcd.c lib-juice.c lib-juice.h \
 	mcp342x.h mcp342x.c \
+	juice-comtests.c \
 	jig-avr.c
 	
 OBJECTS=$(SOURCES:.c=.o)

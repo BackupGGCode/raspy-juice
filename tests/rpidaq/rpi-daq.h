@@ -13,14 +13,15 @@
 
 int rpi_rev;
 
-int fd_i2cbus;
-int fd_dac1;
-int fd_dac2;
-int fd_adc;
-int i2caddr_dac1;
-int i2caddr_adc;
-int i2cbus_open(const char *devbusname);
-int i2cdev_open(int fd, int i2caddr);
+extern int fd_i2cbus;
+extern int fd_dac1;
+extern int fd_dac2;
+extern int fd_adc;
+extern int i2caddr_dac1;
+extern int i2caddr_adc;
+extern int i2cbus_open(const char *devbusname);
+extern int i2cdev_open(int fd, int i2caddr);
+extern int fd_comport;
 
 uint8_t spi_outbuf[16];
 uint8_t spi_inbuf[16];
@@ -28,6 +29,7 @@ int fd_spi0;
 int fd_spi1;
 int spi_open(const char *devbusname);
 void spi_xfer(int fd, int len, uint8_t *tx, uint8_t *rx);
+
 
 #define DAQ_SPISUB_NOP 0
 #define DAQ_SPISUB_CFG 1
@@ -50,6 +52,18 @@ void spi_xfer(int fd, int len, uint8_t *tx, uint8_t *rx);
 #define UI_LED_AMBER	0x0020
 #define UI_LED_GREEN	0x0040
 
+
+#define RPIRXD_FROM_DUT_HDR_RXD	0x01
+#define RPIRXD_FROM_CONSOLE_TX	0x02
+#define RPIRXD_FROM_AVR232_TX	0x03
+#define RPIRXD_FROM_AVR485_TX	0x04
+
+#define RPITXD_TO_DUT_HDR_TXD	0x10
+#define RPITXD_TO_CONSOLE_RX	0x20
+#define RPITXD_TO_AVR232_RX	0x30
+#define RPITXD_TO_AVR485_RX	0x40
+
+
 int rpi_daq_init(void);
 int rpi_daq_close(void);
 
@@ -65,7 +79,7 @@ void daq_set_relay(int relay, int onoff);
 void daq_set_led(int led, int onoff);
 void daq_set_buffered_i2c(int onoff);
 void daq_set_buffered_avr(int onoff);
-void daq_set_com_matrix(int setting);
+void daq_set_comms_matrix(int setting);
 
 int  lcd_init(int rows, int cols, int bits);
 void lcd_clear(void);
@@ -74,6 +88,10 @@ void lcd_pos(int row, int col);
 void lcd_putc(uint8_t data);
 void lcd_puts(char *string);
 void lcd_printf(char *message, ...);
+
+int  rpi_comport_open(char *devpathname);
+int  rpi_comport_setbaud(int baudrate);
+void rpi_comport_close(void);
 
 
 #endif /* RPI_DAQ_H */
