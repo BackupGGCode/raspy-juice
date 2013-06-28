@@ -9,15 +9,16 @@
 
 #define msleep(MS)	usleep(1000 * (MS))
 
-#define CT_BUFSIZE 255
-char outbuf[CT_BUFSIZE + 1];
-//char rpi_outbuf[CT_BUFSIZE + 1];
-//char avr232_outbuf[CT_BUFSIZE + 1];
-//char avr485_outbuf[CT_BUFSIZE + 1];
+#define READ_RETRIES 10
+#define TEST_RETRIES 10
 
-char rpi_inbuf[CT_BUFSIZE + 1];
-char avr232_inbuf[CT_BUFSIZE + 1];
-char avr485_inbuf[CT_BUFSIZE + 1];
+
+#define CT_BUFSIZE 255
+static char outbuf[CT_BUFSIZE + 1];
+static char rpi_inbuf[CT_BUFSIZE + 1];
+static char avr232_inbuf[CT_BUFSIZE + 1];
+static char avr485_inbuf[CT_BUFSIZE + 1];
+static int  out_n, rpi_in, avr232_in, avr485_in;
 
 static void rj_flush(void)
 {
@@ -36,69 +37,52 @@ static void rj_flush(void)
     memset(avr485_inbuf, 0, CT_BUFSIZE);
 }
 
-static void printbufs(int out_n, int rpi_n, int avr232_n, int avr485_n)
+static void printbufs(void)
 {
     printf("      outbuf: %02d bytes: %s\n", out_n,    outbuf);
-    printf("   rpi_inbuf: %02d bytes: %s\n", rpi_n,    rpi_inbuf);
-    printf("avr232_inbuf: %02d bytes: %s\n", avr232_n, avr232_inbuf);
-    printf("avr485_inbuf: %02d bytes: %s\n", avr485_n, avr485_inbuf);
+    printf("   rpi_inbuf: %02d bytes: %s\n", rpi_in,    rpi_inbuf);
+    printf("avr232_inbuf: %02d bytes: %s\n", avr232_in, avr232_inbuf);
+    printf("avr485_inbuf: %02d bytes: %s\n", avr485_in, avr485_inbuf);
 }
-
-#define NUM_RETRY 10
 
 /*
  * Reads all RPi comport, AVR232 and AVR485 buffers.
  * Returns number of bytes in each inbuf by integer refs.
  * Returns number of retries to complete.
  */
-static int read_inbufs(int *rpi, int *avr232, int *avr485)
+static int read_inbufs(void)
 {
-    int retries, stat, r, rpi_n, avr232_n, avr485_n;
+    int retries, stat, r;
+    
+    retries = READ_RETRIES;
+    rpi_in = avr232_in = avr485_in = 0;
     
     memset(rpi_inbuf, 0, CT_BUFSIZE);
     memset(avr232_inbuf, 0, CT_BUFSIZE);
     memset(avr485_inbuf, 0, CT_BUFSIZE);
 
-
-    retries = NUM_RETRY;
-    rpi_n = avr232_n = avr485_n = 0;
-    
     while (retries--) {
 	stat = rj_readstat();
 	
 	if (stat & RXA232) {
-	    r = rj232_read((unsigned char *)avr232_inbuf + avr232_n, 
-			   CT_BUFSIZE - avr232_n -1);
-	    avr232_n += r;
+	    r = rj232_read((unsigned char *)avr232_inbuf + avr232_in, 
+			   CT_BUFSIZE - avr232_in -1);
+	    avr232_in += r;
 	}
 	if (stat & RXA485) {
-	    r = rj485_read((unsigned char *)avr485_inbuf + avr485_n,
-			   CT_BUFSIZE - avr485_n - 1);
-	    avr485_n += r;
+	    r = rj485_read((unsigned char *)avr485_inbuf + avr485_in,
+			   CT_BUFSIZE - avr485_in - 1);
+	    avr485_in += r;
 	}
-	r = read(fd_comport, rpi_inbuf + rpi_n, CT_BUFSIZE - rpi_n - 1);
+	r = read(fd_comport, rpi_inbuf + rpi_in, CT_BUFSIZE - rpi_in - 1);
 	if (r > 0) {
-	    rpi_n += r;
+	    rpi_in += r;
 	}
 	msleep(10);
     }
-    
-    rpi_inbuf[rpi_n] = 0;
-    avr232_inbuf[avr232_n] = 0;
-    avr485_inbuf[avr485_n] = 0;
+    //printbufs();
 
-    if (rpi)
-	*rpi = rpi_n;
-    if (avr232)
-	*avr232 = avr232_n;
-    if (avr485)
-	*avr485 = avr485_n;
-    
-    printf("   rpi_inbuf: %02d bytes: %s\n", rpi_n, rpi_inbuf);
-    printf("avr232_inbuf: %02d bytes: %s\n", avr232_n, avr232_inbuf);
-    printf("avr485_inbuf: %02d bytes: %s\n", avr485_n, avr485_inbuf);
-    
-    return NUM_RETRY - retries;    
+    return READ_RETRIES - retries;    
 }
 
 /*
@@ -108,12 +92,10 @@ static int read_inbufs(int *rpi, int *avr232, int *avr485)
  */
 int test_avr232_egress(int randrun)
 {
-    int out_n, rpi_in, avr232_in;
-    
     rj232_setbaud(9600);
     rpi_comport_setbaud(B9600);
 
-    printf("AVR RS232 Egress Test\n");
+    //printf("AVR RS232 Egress Test\n");
     sprintf(outbuf, "RPi I2C >>>>> AVR RS232 TX >>>>> RPi RxD");
     out_n = strlen(outbuf);
 
@@ -123,7 +105,7 @@ int test_avr232_egress(int randrun)
     
     rj232_send((unsigned char *)outbuf, out_n);
     
-    read_inbufs(&rpi_in, &avr232_in, 0);
+    read_inbufs();
     
     if (rpi_in != out_n)
 	return -2;
@@ -134,12 +116,10 @@ int test_avr232_egress(int randrun)
 
 int test_avr232_ingress(int randrun)
 {
-    int out_n, rpi_in, avr232_in;
-    
     rj232_setbaud(9600);
     rpi_comport_setbaud(B9600);
     
-    printf("AVR RS232 Ingress Test\n");
+    //printf("AVR RS232 Ingress Test\n");
     sprintf(outbuf, "RPi I2C <<<AVR RS232 RX <<< RPi Txd");
     out_n = strlen(outbuf);
     
@@ -149,7 +129,7 @@ int test_avr232_ingress(int randrun)
 
     write(fd_comport, outbuf, out_n);
 
-    read_inbufs(&rpi_in, &avr232_in, 0);
+    read_inbufs();
 
     if (avr232_in != out_n)
 	return -2;
@@ -160,11 +140,9 @@ int test_avr232_ingress(int randrun)
 
 int test_con232_egress(int randrun)
 {
-    int out_n, rpi_in;
-    
     rpi_comport_setbaud(B115200);
-    /* Console RS232 Egress */
-    printf("Console RS232 Egress Test\n");
+    
+    //printf("Console RS232 Egress Test\n");
     sprintf(outbuf, "RPi Header TxD >>sayHello>>> Console RS232 out");
     out_n = strlen(outbuf);
     
@@ -172,7 +150,7 @@ int test_con232_egress(int randrun)
     
     write(fd_comport, outbuf, out_n);
     
-    read_inbufs(&rpi_in, 0, 0);
+    read_inbufs();
 
     if (rpi_in != out_n)
 	return -2;
@@ -183,11 +161,9 @@ int test_con232_egress(int randrun)
 
 int test_con232_ingress(int randrun)
 {
-    int out_n, rpi_in;
-    
     rpi_comport_setbaud(B115200);
 
-    printf("Console RS232 Ingress Test\n");
+    //printf("Console RS232 Ingress Test\n");
     sprintf(outbuf, "RPi Header Rxd <<someReply<<< Console RS232 in");
     out_n = strlen(outbuf);
     
@@ -195,7 +171,7 @@ int test_con232_ingress(int randrun)
     
     write(fd_comport, outbuf, out_n);
     
-    read_inbufs(&rpi_in, 0, 0);
+    read_inbufs();
             
     if (rpi_in != out_n)
 	return -2;
@@ -206,17 +182,11 @@ int test_con232_ingress(int randrun)
 
 int test_avr485_egress(int randrun)
 {
-    int out_n, rpi_in, avr485_in;
-    
+    rj485_setbaud(115200);
+
     rpi_comport_setbaud(B115200);
     
-    if (rj485_setbaud(115200)) {
-	printf("%s: rj485_setbaud failed.\n", __func__);
-	return -1;
-    }
-    
-    /* AVR RS485 Egress TEST */
-    printf("AVR RS485 Egress Test\n");
+    //printf("AVR RS485 Egress Test\n");
     sprintf(outbuf, "RPi >> I2C >> DUT RS485 >> xAA55aa55x >> RPi RS485 RxD");
     out_n = strlen(outbuf);
     
@@ -226,7 +196,7 @@ int test_avr485_egress(int randrun)
 
     rj485_send((unsigned char *) outbuf, out_n);
     
-    read_inbufs(&rpi_in, 0, &avr485_in);
+    read_inbufs();
 
     if (rpi_in != out_n)
 	return -2;
@@ -237,16 +207,11 @@ int test_avr485_egress(int randrun)
 
 int test_avr485_ingress(int randrun)
 {
-    int out_n, rpi_in, avr485_in;
-    
+    rj485_setbaud(115200);
+   
     rpi_comport_setbaud(B115200);
     
-    if (rj485_setbaud(115200)) {
-	printf("%s: rj485_setbaud failed.\n", __func__);
-	return -1;
-    }
-    
-    printf("AVR RS485 Ingress Test\n");
+    //printf("AVR RS485 Ingress Test\n");
     sprintf(outbuf, "RPi >> RS485 TxD >> xAA55aa55x >> DUT RS485 >> I2C >> RPi");
     out_n = strlen(outbuf);
     
@@ -256,7 +221,7 @@ int test_avr485_ingress(int randrun)
 
     write(fd_comport, outbuf, out_n);
 
-    read_inbufs(&rpi_in, 0, &avr485_in);
+    read_inbufs();
     
     daq_set_comms_matrix(0);
     
@@ -268,53 +233,66 @@ int test_avr485_ingress(int randrun)
 }
 
 
-#define NUM_RETRY_UNTIL_PASS 10
-
-int test_juice_comms(int randrun)
+/*
+ * Do all Tests
+ */ 
+ int test_juice_comms(int randrun)
 {
-    int passed, retries, anyfailed = 0;
+    int r, passed, retries, anyfailed = 0;
     
     /* CONSOLE RS232 */
     retries = passed = 0;
-    while ((!passed) && (retries++ < NUM_RETRY_UNTIL_PASS))
-	   passed = !test_con232_egress(1);
+    while ((!passed) && (retries++ < TEST_RETRIES))
+	passed = !test_con232_egress(1);
     printf("CONSOLE RS232 EGRESS: %s, RETRIES: %d\n", passed ? "Passed" : "Failed", retries - 1);
     if (!passed)
 	anyfailed = 1;
-	   
+    
     retries = passed = 0;
-    while ((!passed) && (retries++ < NUM_RETRY_UNTIL_PASS))
-	   passed = !test_con232_ingress(1);
+    while ((!passed) && (retries++ < TEST_RETRIES))
+	passed = !test_con232_ingress(1);
     printf("CONSOLE RS232 INGRESS: %s, RETRIES: %d\n", passed ? "Passed" : "Failed", retries - 1);
     if (!passed)
 	anyfailed = 1;
-
+    
     /* AVR RS232 */
     retries = passed = 0;
-    while ((!passed) && (retries++ < NUM_RETRY_UNTIL_PASS))
-	   passed = !test_avr232_egress(1);
+    while ((!passed) && (retries++ < TEST_RETRIES)) {
+	passed = !test_avr232_egress(1);
+	if (!passed)
+	    printbufs();
+    }
     printf("AVR RS232 EGRESS: %s, RETRIES: %d\n", passed ? "Passed" : "Failed", retries - 1);
     if (!passed)
 	anyfailed = 1;
-	   
+    
     retries = passed = 0;
-    while ((!passed) && (retries++ < NUM_RETRY_UNTIL_PASS))
-	   passed = !test_avr232_ingress(1);
+    while ((!passed) && (retries++ < TEST_RETRIES)) {
+	passed = !test_avr232_ingress(1);
+	if (!passed)
+	    printbufs();
+    }
     printf("AVR RS232 INGRESS: %s, RETRIES: %d\n", passed ? "Passed" : "Failed", retries - 1);
     if (!passed)
 	anyfailed = 1;
 	   
     /* AVR RS485 */
     retries = passed = 0;
-    while ((!passed) && (retries++ < NUM_RETRY_UNTIL_PASS))
-	   passed = !test_avr485_egress(1);
+    while ((!passed) && (retries++ < TEST_RETRIES)) {
+	passed = !test_avr485_egress(1);
+	if (!passed)
+	    printbufs();
+    }
     printf("AVR RS485 EGRESS: %s, RETRIES: %d\n", passed ? "Passed" : "Failed", retries - 1);
     if (!passed)
 	anyfailed = 1;
 	   
     retries = passed = 0;
-    while ((!passed) && (retries++ < NUM_RETRY_UNTIL_PASS))
-	   passed = !test_avr485_ingress(1);
+    while ((!passed) && (retries++ < TEST_RETRIES)) {
+	passed = !test_avr485_ingress(1);
+	if (!passed)
+	    printbufs();
+    }
     printf("AVR RS485 INGRESS: %s, RETRIES: %d\n", passed ? "Passed" : "Failed", retries - 1);
     if (!passed)
 	anyfailed = 1;
