@@ -37,18 +37,55 @@ void mcp3424_readall(float *buf)
     }
 }
 
+#define ADC2VOLTS (11.0 / 1000000.0)
+
 void adc_printall(float vals[4])
 {
     mcp3424_readall(vals);
     
-    printf("%s: %3.2f uV\n", "CH1 DUT+5V-Main ", vals[0] * 1.1);
-    printf("%s: %3.2f uV\n", "CH2 DUT+5V-Servo", vals[1] * 1.1);
-    printf("%s: %3.2f uV\n", "CH3 DUT+3V-Aux  ", vals[2] * 1.1);
-    printf("%s: %3.2f uV\n", "CH4 DUT Itotal  ", vals[3] * 1.1);
+    printf("%s: %2.3f V\n", "CH1 DUT+5V-Main ", vals[0] * ADC2VOLTS);
+    printf("%s: %2.3f V\n", "CH2 DUT+5V-Servo", vals[1] * ADC2VOLTS);
+    printf("%s: %2.3f V\n", "CH3 DUT+3V-Aux  ", vals[2] * ADC2VOLTS);
+    printf("%s: %2.3f V\n", "CH4 DUT Itotal  ", vals[3] * ADC2VOLTS);
     printf("\n");
 }
 
+static int limits(float lolimit, float val, float hilimit)
+{
+    if (val < lolimit)
+	return -1;
+    if (val > hilimit)
+	return 1;
+    return 0;
+}
 
+int test_juice_power(float vals[4])
+{
+    int i;
+    for (i = 0; i < 4; i++)
+	vals[i] = vals[i] * ADC2VOLTS;
+    
+    if (limits(4.95, vals[0], 5.30)) {
+	printf("CH1 DUT+5V-Main out-of-range %2.3fV\n", vals[0]);
+	return -1;
+    }
+    if (limits(4.95, vals[1], 5.30)) {
+	printf("CH1 DUT+5V-Servo out-of-range %2.3fV\n", vals[1]);
+	return -2;
+    }
+    if (limits(3.00, vals[2], 3.60)) {
+	printf("CH1 DUT+3V-Aux out-of-range %2.3fV\n", vals[2]);
+	return -3;
+    }
+#if 0
+    if (limits(4.95, vals[3], 5.25)) {
+	printf("CH1 DUT Itotal out-of-range %2.3fV\n", vals[3]);
+	return -4;
+    }
+#endif
+    return 0;
+}
+    
 static int rj_initialize(void)
 {   
     int r;
@@ -185,6 +222,10 @@ int main(int argc, char *argv[])
     	adc_printall(adc_vals);
 	
 	/* fixme: test power levels */
+	if (test_juice_power(adc_vals)) {
+	    printf("main: test_juice_power failed, exiting.\n");
+	    close_exit(-1);
+	}
 	
 	/* Turn on DUT I2C buffered connection */
 	daq_set_buffered_i2c(1);
