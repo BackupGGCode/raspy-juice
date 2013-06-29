@@ -242,10 +242,6 @@ int main(int argc, char *argv[])
 	    close_exit(-1);
 	}
 
-#if 1
-	/* NOT YET NOT YETifdef zero because I'm pushing all com port functions
-	 * to juice-comport.c for debugging this overflow thing
-	 */
 	/* fixme: open RPi com port with default 9600,8N1 */
 	if (rpi_comport_open("/dev/ttyAMA0")) {
 	    printf("main: rpi_comport_open failed.\n");
@@ -254,7 +250,6 @@ int main(int argc, char *argv[])
 	printf("main: rpi_comport_open: succeeded, fd_comport = %d\n", 
 	       fd_comport);
 
-#endif
 	/* fixme: do com ports test stuff */
 	test_juice_comms(1);
 	
