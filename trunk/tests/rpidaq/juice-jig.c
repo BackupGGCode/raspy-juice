@@ -25,6 +25,8 @@ FILE *logfile;
 #define UI_GREEN	0x0040
 
 
+int do_state_2(int dont_do_stuff);
+
 void mcp3424_readall(float *buf)
 {
     int ch;
@@ -195,70 +197,12 @@ int main(int argc, char *argv[])
 
     /* Do a one-run "full" test cycle ? */
     if (desired == 2) {
-	
-#ifdef IRRITATING_BUTTON_PUSH
-	printf("Waiting for keypress for one-time 'full' cycle...\n");
-	/* fixme: refac into method daq_get_key */
-	while ((daq_xfer(DAQ_SPISUB_NOP, 0) & 0x03) == 0)
-	    ;
-	printf("OK, got keypress\n");
-#endif
-	/* Turn on DUT power and settle */
-	daq_set_relay(RELAY_VIN, 1);
-	usleep(1000U * 200);
-//	adc_printall(adc_vals);
 
-	/* Turn on DUT loads, settle and measure */
-	daq_set_relay(RELAY_5VMAIN, 1);
-	usleep(1000U * 200);
-//	adc_printall(adc_vals);
+#define WAIT_FOR_BUTTON	0x0001
+#define AVR_FLASHING	0x0002
 
-	daq_set_relay(RELAY_5VSERVO, 1);
-	usleep(1000U * 200);
-//	adc_printall(adc_vals);
-
-	daq_set_relay(RELAY_3VAUX, 1);
-	usleep(1000U * 200);
-    	adc_printall(adc_vals);
-	
-	/* fixme: test power levels */
-	if (test_juice_power(adc_vals)) {
-	    printf("main: test_juice_power failed, exiting.\n");
-	    close_exit(-1);
-	}
-	
-	/* Turn on DUT I2C buffered connection */
-	daq_set_buffered_i2c(1);
-	daq_set_buffered_avr(1);
-
-	/* do AVR stuff */
-//	r = do_avr_run();
-	r = 1;
-	printf("main: do_avr_run r = %d\n", r);
-	
-	/* fixme: bring Raspy Juice alive with lib-juice and set comms */
-	if (rj_initialize()) {
-	    printf("main: rj_initialize() failed.\n");
-	    close_exit(-1);
-	}
-
-	/* fixme: open RPi com port with default 9600,8N1 */
-	if (rpi_comport_open("/dev/ttyAMA0")) {
-	    printf("main: rpi_comport_open failed.\n");
-	    close_exit(-1);
-	}
-	printf("main: rpi_comport_open: succeeded, fd_comport = %d\n", 
-	       fd_comport);
-
-	/* fixme: do com ports test stuff */
-	test_juice_comms(1);
-	
-	/* fixme: test of power LED, and AVR service firmware flashing */
-	
-	/* fixme: do pin port stuff */
-	
-	/* fixme: status report generation */
-    
+	do_state_2(WAIT_FOR_BUTTON |
+		   AVR_FLASHING);
     }
     
     if (desired == 3) {
@@ -268,5 +212,78 @@ int main(int argc, char *argv[])
     }
     
     close_exit(0);
+    return 0;
+}
+
+int do_state_2(int dont_do_stuff)
+{
+    int r;
+    float adc_vals[4];
+	
+    if (!(dont_do_stuff & WAIT_FOR_BUTTON)) {
+	printf("Waiting for keypress for one-time 'full' cycle...\n");
+	/* fixme: refac into method daq_get_key */
+	while ((daq_xfer(DAQ_SPISUB_NOP, 0) & 0x03) == 0)
+	;
+	printf("OK, got keypress\n");
+    }
+
+    /* Turn on DUT power and settle */
+    daq_set_relay(RELAY_VIN, 1);
+    usleep(1000U * 200);
+//	adc_printall(adc_vals);
+
+    /* Turn on DUT loads, settle and measure */
+    daq_set_relay(RELAY_5VMAIN, 1);
+    usleep(1000U * 200);
+//	adc_printall(adc_vals);
+
+    daq_set_relay(RELAY_5VSERVO, 1);
+    usleep(1000U * 200);
+//	adc_printall(adc_vals);
+
+    daq_set_relay(RELAY_3VAUX, 1);
+    usleep(1000U * 200);
+    adc_printall(adc_vals);
+	
+    /* fixme: test power levels */
+    if (test_juice_power(adc_vals)) {
+	printf("main: test_juice_power failed, exiting.\n");
+	close_exit(-1);
+    }
+	
+    /* Turn on DUT I2C buffered connection */
+    daq_set_buffered_i2c(1);
+    daq_set_buffered_avr(1);
+
+    /* do AVR stuff */
+    if (!(dont_do_stuff & AVR_FLASHING)) {
+	r = do_avr_run();
+	printf("main: do_avr_run r = %d\n", r);
+    }
+	
+    /* fixme: bring Raspy Juice alive with lib-juice and set comms */
+    if (rj_initialize()) {
+	printf("main: rj_initialize() failed.\n");
+	close_exit(-1);
+    }
+
+    /* fixme: open RPi com port with default 9600,8N1 */
+    if (rpi_comport_open("/dev/ttyAMA0")) {
+	printf("main: rpi_comport_open failed.\n");
+	close_exit(-1);
+    }
+    printf("main: rpi_comport_open: succeeded, fd_comport = %d\n", 
+	   fd_comport);
+
+    /* fixme: do com ports test stuff */
+    test_juice_comms(1);
+	
+    /* fixme: test of power LED, and AVR service firmware flashing */
+	
+    /* fixme: do pin port stuff */
+	
+    /* fixme: status report generation */
+
     return 0;
 }
