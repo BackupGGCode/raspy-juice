@@ -35,7 +35,7 @@ The main feature of this expansion board is to supply the RPi host computer with
   * [http://raspy-juice.googlecode.com/svn/wiki/juice-r1-wiki-dim-rpi.pdf Mechanical overlay drawing of Raspy Juice over Raspberry Pi]
 <br>
 <br>
-= 3. Module Conections =
+= 3. Module Connections =
 http://raspy-juice.googlecode.com/svn/wiki/juice-r1-conndiag.png
 
 === 3.1 RPi GPIO header ===
