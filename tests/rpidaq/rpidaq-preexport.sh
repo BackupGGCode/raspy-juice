@@ -46,16 +46,16 @@ else
   echo "out" > /sys/class/gpio/gpio23/direction
   echo "in" >  /sys/class/gpio/gpio24/direction
 
+  echo "1" > /sys/class/gpio/gpio17/value
+  echo "0" > /sys/class/gpio/gpio22/value
+  echo "0" > /sys/class/gpio/gpio23/value
 fi
 
 echo "Directory of /sys/class/gpio:"
-/usr/bin/ls --color=auto /sys/class/gpio
-
-#echo -n "gpio17/direction = "
-#cat /sys/class/gpio/gpio24/direction
-#echo -n "gpio17/value = "
-#cat /sys/class/gpio/gpio24/value
+/usr/bin/ls -l --color=auto /sys/class/gpio
 
 chown root:tty /dev/ttyAMA0
 chmod g+rw /dev/ttyAMA0
 
+echo "Directory of relevant devices in /dev"
+ls -l  --color=auto /dev/i2c* /dev/spi* /dev/ttyA* /dev/rtc*

@@ -85,6 +85,48 @@ static int read_inbufs(void)
     return READ_RETRIES - retries;    
 }
 
+int test_con232_egress(int randrun)
+{
+    daq_set_comms_matrix(RPITXD_TO_DUT_HDR_TXD | RPIRXD_FROM_CONSOLE_TX);
+    
+    rpi_comport_setbaud(B115200);
+    
+    //printf("Console RS232 Egress Test\n");
+    sprintf(outbuf, "RPi Header TxD >>sayHello>>> Console RS232 out");
+    out_n = strlen(outbuf);
+    
+    write(fd_comport, outbuf, out_n);
+    
+    read_inbufs();
+
+    if (rpi_in != out_n)
+	return -2;
+    if (memcmp(rpi_inbuf, outbuf, out_n))
+	return -3;
+    return 0;
+}
+
+int test_con232_ingress(int randrun)
+{
+    daq_set_comms_matrix(RPITXD_TO_CONSOLE_RX | RPIRXD_FROM_DUT_HDR_RXD);
+    
+    rpi_comport_setbaud(B57600);
+
+    //printf("Console RS232 Ingress Test\n");
+    sprintf(outbuf, "RPi Header Rxd <<someReply<<< Console RS232 in");
+    out_n = strlen(outbuf);
+    
+    write(fd_comport, outbuf, out_n);
+    
+    read_inbufs();
+            
+    if (rpi_in != out_n)
+	return -2;
+    if (memcmp(rpi_inbuf, outbuf, out_n))
+	return -3;
+    return 0;
+}
+
 /*
  * Tests the auxiliary RS232 interface of the AVR microcontroller on Juice
  * The interface is a HALF Duplex, so it cannot simultaneously send/receive
@@ -92,6 +134,8 @@ static int read_inbufs(void)
  */
 int test_avr232_egress(int randrun)
 {
+    daq_set_comms_matrix(RPIRXD_FROM_AVR232_TX);
+    
     rj232_setbaud(9600);
     rpi_comport_setbaud(B9600);
 
@@ -99,8 +143,6 @@ int test_avr232_egress(int randrun)
     sprintf(outbuf, "RPi I2C >>>>> AVR RS232 TX >>>>> RPi RxD");
     out_n = strlen(outbuf);
 
-    daq_set_comms_matrix(RPIRXD_FROM_AVR232_TX);
-    
     rj_flush();
     
     rj232_send((unsigned char *)outbuf, out_n);
@@ -116,6 +158,8 @@ int test_avr232_egress(int randrun)
 
 int test_avr232_ingress(int randrun)
 {
+    daq_set_comms_matrix(RPITXD_TO_AVR232_RX);
+
     rj232_setbaud(9600);
     rpi_comport_setbaud(B9600);
     
@@ -123,12 +167,10 @@ int test_avr232_ingress(int randrun)
     sprintf(outbuf, "RPi I2C <<<AVR RS232 RX <<< RPi Txd");
     out_n = strlen(outbuf);
     
-    daq_set_comms_matrix(RPITXD_TO_AVR232_RX);
-
     rj_flush();
 
     write(fd_comport, outbuf, out_n);
-
+    
     read_inbufs();
 
     if (avr232_in != out_n)
@@ -138,60 +180,17 @@ int test_avr232_ingress(int randrun)
     return 0;
 }
 
-int test_con232_egress(int randrun)
-{
-    rpi_comport_setbaud(B115200);
-    
-    //printf("Console RS232 Egress Test\n");
-    sprintf(outbuf, "RPi Header TxD >>sayHello>>> Console RS232 out");
-    out_n = strlen(outbuf);
-    
-    daq_set_comms_matrix(RPITXD_TO_DUT_HDR_TXD | RPIRXD_FROM_CONSOLE_TX);
-    
-    write(fd_comport, outbuf, out_n);
-    
-    read_inbufs();
-
-    if (rpi_in != out_n)
-	return -2;
-    if (memcmp(rpi_inbuf, outbuf, out_n))
-	return -3;
-    return 0;
-}
-
-int test_con232_ingress(int randrun)
-{
-    rpi_comport_setbaud(B115200);
-
-    //printf("Console RS232 Ingress Test\n");
-    sprintf(outbuf, "RPi Header Rxd <<someReply<<< Console RS232 in");
-    out_n = strlen(outbuf);
-    
-    daq_set_comms_matrix(RPITXD_TO_CONSOLE_RX | RPIRXD_FROM_DUT_HDR_RXD);
-    
-    write(fd_comport, outbuf, out_n);
-    
-    read_inbufs();
-            
-    if (rpi_in != out_n)
-	return -2;
-    if (memcmp(rpi_inbuf, outbuf, out_n))
-	return -3;
-    return 0;
-}
-
 int test_avr485_egress(int randrun)
 {
-    rj485_setbaud(115200);
+    daq_set_comms_matrix(RPIRXD_FROM_AVR485_TX);
 
+    rj485_setbaud(115200);
     rpi_comport_setbaud(B115200);
     
     //printf("AVR RS485 Egress Test\n");
     sprintf(outbuf, "RPi >> I2C >> DUT RS485 >> xAA55aa55x >> RPi RS485 RxD");
     out_n = strlen(outbuf);
     
-    daq_set_comms_matrix(RPIRXD_FROM_AVR485_TX);
-
     rj_flush();
 
     rj485_send((unsigned char *) outbuf, out_n);
@@ -207,16 +206,15 @@ int test_avr485_egress(int randrun)
 
 int test_avr485_ingress(int randrun)
 {
+    daq_set_comms_matrix(RPITXD_TO_AVR485_RX);
+
     rj485_setbaud(115200);
-   
     rpi_comport_setbaud(B115200);
     
     //printf("AVR RS485 Ingress Test\n");
     sprintf(outbuf, "RPi >> RS485 TxD >> xAA55aa55x >> DUT RS485 >> I2C >> RPi");
     out_n = strlen(outbuf);
     
-    daq_set_comms_matrix(RPITXD_TO_AVR485_RX);
-
     rj_flush();
 
     write(fd_comport, outbuf, out_n);
@@ -238,7 +236,7 @@ int test_avr485_ingress(int randrun)
  */ 
  int test_juice_comms(int randrun)
 {
-    int r, passed, retries, anyfailed = 0;
+    int passed, retries, anyfailed = 0;
     
     /* CONSOLE RS232 */
     retries = passed = 0;
@@ -259,8 +257,10 @@ int test_avr485_ingress(int randrun)
     retries = passed = 0;
     while ((!passed) && (retries++ < TEST_RETRIES)) {
 	passed = !test_avr232_egress(1);
-	if (!passed)
+	if (!passed) {
+	    msleep(150);
 	    printbufs();
+	}
     }
     printf("AVR RS232 EGRESS: %s, RETRIES: %d\n", passed ? "Passed" : "Failed", retries - 1);
     if (!passed)
@@ -269,8 +269,10 @@ int test_avr485_ingress(int randrun)
     retries = passed = 0;
     while ((!passed) && (retries++ < TEST_RETRIES)) {
 	passed = !test_avr232_ingress(1);
-	if (!passed)
+	if (!passed) {
 	    printbufs();
+	    msleep(150);
+	}
     }
     printf("AVR RS232 INGRESS: %s, RETRIES: %d\n", passed ? "Passed" : "Failed", retries - 1);
     if (!passed)

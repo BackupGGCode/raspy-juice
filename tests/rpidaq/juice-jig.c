@@ -25,7 +25,7 @@ FILE *logfile;
 #define UI_GREEN	0x0040
 
 
-int do_state_2(int dont_do_stuff);
+int do_state_2_without(int dont_do_stuff);
 
 void mcp3424_readall(float *buf)
 {
@@ -67,11 +67,11 @@ int test_juice_power(float vals[4])
     for (i = 0; i < 4; i++)
 	vals[i] = vals[i] * ADC2VOLTS;
     
-    if (limits(4.95, vals[0], 5.30)) {
+    if (limits(4.75, vals[0], 5.27)) {
 	printf("CH1 DUT+5V-Main out-of-range %2.3fV\n", vals[0]);
 	return -1;
     }
-    if (limits(4.95, vals[1], 5.30)) {
+    if (limits(4.75, vals[1], 5.27)) {
 	printf("CH1 DUT+5V-Servo out-of-range %2.3fV\n", vals[1]);
 	return -2;
     }
@@ -138,7 +138,7 @@ void close_exit(int exitcode)
     
 int main(int argc, char *argv[])
 {
-    int r, desired;
+    int desired;
     float adc_vals[4];
     
     printf("Hello, world!\n");
@@ -201,11 +201,16 @@ int main(int argc, char *argv[])
 #define WAIT_FOR_BUTTON	0x0001
 #define AVR_FLASHING	0x0002
 
-	do_state_2(WAIT_FOR_BUTTON |
-		   AVR_FLASHING);
+	do_state_2_without(WAIT_FOR_BUTTON |
+			   AVR_FLASHING);
     }
     
     if (desired == 3) {
+	
+	do_state_2_without(WAIT_FOR_BUTTON);
+    }
+    
+    if (desired == 4) {
 	/* Do loopy-loop of desired==2 one-time test
 	 * with push button start, and halfway stopping
 	 */
@@ -215,7 +220,7 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-int do_state_2(int dont_do_stuff)
+int do_state_2_without(int dont_do_stuff)
 {
     int r;
     float adc_vals[4];
@@ -243,7 +248,7 @@ int do_state_2(int dont_do_stuff)
 //	adc_printall(adc_vals);
 
     daq_set_relay(RELAY_3VAUX, 1);
-    usleep(1000U * 200);
+    usleep(1000U * 1000);
     adc_printall(adc_vals);
 	
     /* fixme: test power levels */
