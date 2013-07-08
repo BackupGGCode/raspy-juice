@@ -47,7 +47,9 @@ static int lcd_data;
 
 #define BAUDRATE	B9600
 #define COMPORT_DEVICE	"/dev/ttyAMA0"
-#define _POSIX_SOURCE	1 /* POSIX compliant source */
+#define _POSIX_SOURCE 	1 /* POSIX compliant source */
+
+#define msleep(MS) 	usleep(1000 * (MS))
 
 int fd_comport = 0;
 static struct termios oldtio;
@@ -344,8 +346,8 @@ int rpi_comport_open(char *devpathname)
     cfmakeraw(&newtio);
     cfsetspeed(&newtio, B9600);
     /* minimum one character, or 1 character timeout */
-    newtio.c_cc[VMIN] = 1;
-    newtio.c_cc[VTIME] = 1;
+    newtio.c_cc[VMIN] = 0;
+    newtio.c_cc[VTIME] = 0;
     tcflush(fd_comport, TCIOFLUSH);
     tcsetattr(fd_comport, TCSANOW, &newtio);
     return 0;
@@ -363,8 +365,11 @@ int rpi_comport_setbaud(int baudrate)
     tcgetattr(fd_comport, &tmptio);
     /* set new baud rate and preserve everything else */
     cfsetspeed(&tmptio, baudrate);
+    tcdrain(fd_comport);
     tcflush(fd_comport, TCIOFLUSH);
+    //msleep(500);
     tcsetattr(fd_comport, TCSANOW, &tmptio);
+    msleep(500);
     return 0;
 }
 
