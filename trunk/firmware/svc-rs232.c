@@ -92,7 +92,7 @@ void rs232_swuart_setbaud(uint8_t clock_prescale, uint8_t period_ticks)
     TCCR2A = (1<<WGM21) | (0<<WGM20);
     TCCR2B = clock_prescale & 0b00000111;
 
-    fullperiod = period_ticks - 1;
+    fullperiod = period_ticks;
     /* one and a half multiplication of fullperiod */
     onehalfperiod = period_ticks + (period_ticks >> 1);
     OCR2A = fullperiod;
@@ -222,7 +222,7 @@ ISR(TIMER2_COMPA_vect)
 	/* so state machine should be for transmission  */
 	/* (XMIT_START + 10) includes high stop bit	*/
 
-	if (swuart_state < (XMIT_START + 9)) {
+	if (swuart_state < (XMIT_START + 10)) {
 
 	    if (swuart_xmit_reg & 0x01) {
 		RS232_TXD_HIGH();
