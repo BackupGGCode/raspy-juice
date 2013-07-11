@@ -173,7 +173,13 @@ void rs232_puts(char *s)
 ISR(INT0_vect)
 {
     TCNT2 = 0;
-    OCR2A = onehalfperiod;
+    /*
+     * Small hack to improve SWUART bit-timing reception, esp at 9600bps.
+     * Instead of waiting one and a half periods after RS232 start bit
+     * leading edge for middle of next bit window, we just wait one full
+     * period, plus a little bit, to test for the high/low.
+     */
+    OCR2A = fullperiod + 1;
     TIMER2_INT_ENABLE();
     if (swuart_state == IDLE) {
 	swuart_state = RECV_START;
