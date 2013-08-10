@@ -3,7 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "juice-dev.h"
+#include "lib-juice.h"
 #include "../firmware/juice.h"
 
 #include <asm-generic/termbits.h>
@@ -14,8 +14,7 @@ char outbuf[BUFSIZE];
 
 int main(int argc, char *argv[])
 {
-    char devbusname[] = "/dev/i2c-0";
-    int i2caddr = AVRSLAVE_ADDR;
+    int i2caddr = DEFAULT_JUICE_I2CADDR;
     char *version;
 
     int count = 0;
@@ -23,9 +22,9 @@ int main(int argc, char *argv[])
     
     printf("Hello, world! I am example3 - reading/writing data from AVR-RS232\n");
     
-    rval = rj_open(devbusname, i2caddr);
+    rval = rj_open(i2caddr);
     if (rval < 0) {
-	printf("open %s: failed, rval = %d\n", devbusname, rval);
+	printf("juice: open failed, rval = %d\n", rval);
 	exit(1);
     }
     else
