@@ -10,6 +10,7 @@
 #define I2C_NUM_RETRIES	3
 #define RETRY_TIMEOUT	20000
 
+static int rpi_rev;
 static int rj_file = 0;
 static int rj_errno;
 
@@ -22,19 +23,49 @@ int rj_readblock(int subreg, void *inbuf);
 #define BUFSIZE 64
 char version_str[BUFSIZE];
 
-int rj_open(const char *devbusname, int i2caddr)
+static int i2cdev_testopen(const char *devbusname, int i2caddr_test)
+{
+    int fd, r;
+    unsigned char i2c_buffer[16];
+    
+    /* test bus */
+    fd = open(devbusname, O_RDWR);
+    if (fd < 0)
+        return -1;
+    
+    /* setup test device as slave*/
+    r = ioctl(fd, I2C_SLAVE, i2caddr_test);
+    if (r < 0)
+       return -2;
+    
+    /* read I2C test slave */
+    r = read(fd, i2c_buffer, 4);
+    if (r < 0)
+        return -3;
+
+    return fd;
+}
+
+int rj_open(int i2caddr)
 {
     int rval;
-
-    rj_file = open(devbusname, O_RDWR);
-    if (rj_file < 0) {
-	rj_errno = rj_file;
-	return -1;
+    rpi_rev = 1;
+    
+    /* Test of I2C bus file and connectivity to AVR as I2C slave */
+    rval = i2cdev_testopen("/dev/i2c-0", i2caddr);
+    
+    if (rval < 0) {
+        rpi_rev = 2;
+        rval = i2cdev_testopen("/dev/i2c-1", i2caddr);
     }
-    if ((rval = ioctl(rj_file, I2C_SLAVE, i2caddr)) < 0) {
-	rj_errno = rval;
-	return -2;
+    if (rval < 0) {
+        printf("i2cdev_testopen: /dev/i2c-x unsuccessful, Raspy Juice found.\n");
+        return -1;
     }
+    printf("i2cdev_testopen: successful, fd_i2cbus = %d, rpi_rev = %d\n",
+           rj_file, rpi_rev);
+    
+    rj_file = rval;
     return rj_file;
 }
 
