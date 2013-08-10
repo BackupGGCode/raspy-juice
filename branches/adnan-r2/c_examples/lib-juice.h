@@ -3,6 +3,8 @@
 
 #include "../firmware/juice.h"
 
+#define DEFAULT_JUICE_I2CADDR 0x48
+
 #define BUFSIZE 64
 char version_str[BUFSIZE];
 unsigned char rs232_inbuf[BUFSIZE];
@@ -13,7 +15,8 @@ int rj_writebyte(int subreg, int data);
 int rj_readword(int subreg);
 int rj_writeword(int subreg, int data);
 
-int rj_open(const char *devbusname, int i2caddr);
+//int rj_open(const char *devbusname, int i2caddr);
+int rj_open(int i2caddr);
 char *rj_getversion(void);
 int rj_setservo(int chan, int usec);
 int rj_readstat(void);
